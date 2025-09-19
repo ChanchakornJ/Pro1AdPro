@@ -1,8 +1,11 @@
-module com.example.project1 {
+module se233.project1 {
     requires javafx.controls;
-    requires javafx.fxml;
+    requires javafx.graphics;
+    requires javafx.base;
 
+    requires java.desktop;
+    requires ffmpeg;
 
-    opens com.example to javafx.fxml;
-    exports com.example;
+    exports se233.Project1;
+    exports se233.Project1.controller;
 }
