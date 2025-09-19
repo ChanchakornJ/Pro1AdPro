@@ -28,5 +28,19 @@ public class ChangeFormatTask {
 
         ffmpeg.run(builder);
     }
+    public void convertToWav(String inputPath, String outputPath) throws IOException{
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(inputPath)
+                .overrideOutputFiles(true)
+                .addOutput(outputPath)
+                .setFormat("wav")
+                .setAudioBitRate(192000)
+                .setAudioChannels(2)
+                .setAudioSampleRate(44100)
+                .done();
+
+        ffmpeg.run(builder);
+    }
+
 }
 
