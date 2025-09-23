@@ -1,8 +1,10 @@
 package se233.Project1.controller;
 import javafx.application.Application;
+import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Slider;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
@@ -12,9 +14,10 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
 public class MainViewController {
+
     private final ListView<String> inputListView = new ListView<>();
+    private final Slider quality = new Slider();
     private final Button mp3 = new Button("Convert to MP3");
     private final Map<String, String> filePathMap = new HashMap<>();
     VBox root = new VBox(10, inputListView, mp3);
@@ -39,9 +42,9 @@ public class MainViewController {
             event.setDropCompleted(success);
             event.consume();
         });
+
         mp3.setOnAction(e -> changeFormat());
     }
-
 
 
 
@@ -54,10 +57,10 @@ public class MainViewController {
             try {
                 ChangeFormatTask task = new ChangeFormatTask("/opt/homebrew/bin/ffmpeg", "/opt/homebrew/bin/ffprobe");
                 task.convertToMp3(inputPath, outputPath);
-                System.out.println("✅ Converted: " + outputPath);
+                System.out.println("Converted: " + outputPath);
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println("❌ Conversion failed for: " + inputPath);
+                System.out.println("Conversion failed for: " + inputPath);
             }
         } else {
             System.out.println("No file selected.");
