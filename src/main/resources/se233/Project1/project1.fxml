@@ -76,7 +76,7 @@
    <left>
       <BorderPane fx:id="dropZoneArea" prefHeight="150.0" prefWidth="248.0" BorderPane.alignment="CENTER">
          <top>
-            <AnchorPane fx:id="dropZone" prefHeight="150.0" prefWidth="250.0" style="-fx-border-color: black; -fx-border-width: 2; -fx-border-radius: 10; -fx-padding: 10;" BorderPane.alignment="CENTER">
+            <AnchorPane fx:id="dropZone" prefHeight="150.0" prefWidth="250.0" style="-fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 10; -fx-padding: 10;" BorderPane.alignment="CENTER">
                <children>
                   <Label fx:id="dropFileLabel" layoutX="48.0" layoutY="67.0" text="drop the file here" />
                </children>
@@ -166,51 +166,26 @@
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <ProgressBar fx:id="file1ProgressBar" prefWidth="200.0" progress="0.0" />
-                              <CheckBox fx:id="file1CheckBox" mnemonicParsing="false">
-                                 <padding>
-                                    <Insets left="10.0" />
-                                 </padding>
-                              </CheckBox>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <ProgressBar fx:id="file2ProgressBar" prefWidth="200.0" progress="0.0" />
-                              <CheckBox fx:id="file2CheckBox" mnemonicParsing="false">
-                                 <padding>
-                                    <Insets left="10.0" />
-                                 </padding>
-                              </CheckBox>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <ProgressBar fx:id="file3ProgressBar" prefWidth="200.0" progress="0.0" />
-                              <CheckBox fx:id="file3CheckBox" mnemonicParsing="false">
-                                 <padding>
-                                    <Insets left="10.0" />
-                                 </padding>
-                              </CheckBox>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <ProgressBar fx:id="file4ProgressBar" prefWidth="200.0" progress="0.0" />
-                              <CheckBox fx:id="file4CheckBox" mnemonicParsing="false">
-                                 <padding>
-                                    <Insets left="10.0" />
-                                 </padding>
-                              </CheckBox>
                            </children>
                         </HBox>
                         <HBox prefHeight="100.0" prefWidth="200.0">
                            <children>
                               <ProgressBar fx:id="file5ProgressBar" prefWidth="200.0" progress="0.0" />
-                              <CheckBox fx:id="file5CheckBox" mnemonicParsing="false">
-                                 <padding>
-                                    <Insets left="10.0" />
-                                 </padding>
-                              </CheckBox>
                            </children>
                         </HBox>
                      </children>
