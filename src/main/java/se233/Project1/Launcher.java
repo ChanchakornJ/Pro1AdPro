@@ -10,7 +10,7 @@ public class Launcher extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(Launcher.class.getResource("project1.fxml"));
-                Scene scene = new Scene(fxmlLoader.load());
+        Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Audio Converter");
         stage.setScene(scene);
         stage.show();
