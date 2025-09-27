@@ -18,7 +18,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<?import javafx.scene.control.ListView?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="se233.Project1.controller.MainViewController">
    <right>
       <VBox fx:id="settingZoneArea" prefHeight="142.0" prefWidth="366.0" BorderPane.alignment="CENTER">
@@ -30,7 +29,7 @@
                         <HBox fx:id="qualityZone" prefHeight="31.0" prefWidth="253.0">
                            <children>
                               <Label fx:id="qualityLabel" text="Quality" />
-                              <Slider fx:id="qualitySlider" majorTickUnit="64.0" max="320.0" minorTickCount="4" prefHeight="33.0" prefWidth="200.0" showTickLabels="true">
+                              <Slider fx:id="qualitySlider" blockIncrement="0.0" majorTickUnit="64.0" max="320.0" minorTickCount="4" prefHeight="33.0" prefWidth="200.0" showTickLabels="true">
                                  <padding>
                                     <Insets left="5.0" />
                                  </padding>
@@ -149,8 +148,6 @@
             <AnchorPane fx:id="dropZone" prefHeight="150.0" prefWidth="250.0" style="-fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 10; -fx-padding: 10;" BorderPane.alignment="CENTER">
                <children>
                   <Label fx:id="dropFileLabel" layoutX="48.0" layoutY="67.0" text="drop the file here" />
-                  <ListView fx:id="inputListView" layoutX="20" layoutY="100" prefWidth="200" prefHeight="150" />
-                  //ตรงนี้เน้อ
                </children>
                <BorderPane.margin>
                   <Insets left="30.0" right="30.0" />
@@ -179,92 +176,102 @@
    <bottom>
       <VBox fx:id="fileProgressZonePane" prefHeight="170.0" prefWidth="600.0" BorderPane.alignment="CENTER">
          <children>
-            <BorderPane fx:id="fileProgressZone" prefHeight="200.0" prefWidth="200.0">
-               <left>
-                  <VBox fx:id="progressFileName" prefHeight="180.0" prefWidth="174.0" BorderPane.alignment="CENTER">
-                     <children>
-                        <HBox fx:id="file1Progress" prefHeight="100.0" prefWidth="200.0">
+            <ScrollPane fitToWidth="true" pickOnBounds="false" prefHeight="200.0" prefWidth="200.0">
+               <content>
+                  <BorderPane fx:id="fileProgressZone" prefHeight="200.0" prefWidth="200.0">
+                     <left>
+                        <VBox fx:id="progressFileName" prefHeight="180.0" prefWidth="174.0" BorderPane.alignment="CENTER">
                            <children>
-                              <Label fx:id="newFile1Name" text="Adpro_Project1.mp3" />
+                              <HBox fx:id="file1Progress" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label fx:id="newFile1Name" text="Adpro_Project1.mp3" />
+                                 </children>
+                                 <padding>
+                                    <Insets left="20.0" />
+                                 </padding>
+                              </HBox>
+                              <HBox fx:id="file2Progress" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label fx:id="newFile2Name" text="Adpro_Project1.mp3" />
+                                 </children>
+                                 <padding>
+                                    <Insets left="20.0" />
+                                 </padding>
+                              </HBox>
+                              <HBox fx:id="file3Progress" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label fx:id="newFile3Name" text="Adpro_Project1.mp3" />
+                                 </children>
+                                 <padding>
+                                    <Insets left="20.0" />
+                                 </padding>
+                              </HBox>
+                              <HBox fx:id="file4Progress" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label fx:id="newFile4Name" text="Adpro_Project1.mp3" />
+                                 </children>
+                                 <padding>
+                                    <Insets left="20.0" />
+                                 </padding>
+                              </HBox>
+                              <HBox fx:id="file5Progress" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Label fx:id="newFile5Name" text="Adpro_Project1.mp3" />
+                                 </children>
+                                 <padding>
+                                    <Insets left="20.0" />
+                                 </padding>
+                              </HBox>
                            </children>
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="file2Progress" prefHeight="100.0" prefWidth="200.0">
+                           <BorderPane.margin>
+                              <Insets left="30.0" right="10.0" />
+                           </BorderPane.margin>
+                        </VBox>
+                     </left>
+                     <right>
+                        <VBox fx:id="fileProgressBarZone" prefHeight="200.0" prefWidth="348.0" BorderPane.alignment="CENTER">
                            <children>
-                              <Label fx:id="newFile2Name" text="Adpro_Project1.mp3" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ProgressBar fx:id="file1ProgressBar" prefWidth="200.0" progress="0.0" />
+                                 </children>
+                              </HBox>
+                              <HBox prefHeight="100.0" prefWidth="365.0">
+                                 <children>
+                                    <ProgressBar fx:id="file2ProgressBar" prefWidth="200.0" progress="0.0" />
+                                 </children>
+                              </HBox>
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ProgressBar fx:id="file3ProgressBar" prefWidth="200.0" progress="0.0" />
+                                 </children>
+                              </HBox>
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ProgressBar fx:id="file4ProgressBar" prefWidth="200.0" progress="0.0" />
+                                 </children>
+                              </HBox>
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ProgressBar fx:id="file5ProgressBar" prefWidth="200.0" progress="0.0" />
+                                 </children>
+                              </HBox>
                            </children>
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="file3Progress" prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <Label fx:id="newFile3Name" text="Adpro_Project1.mp3" />
-                           </children>
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="file4Progress" prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <Label fx:id="newFile4Name" text="Adpro_Project1.mp3" />
-                           </children>
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="file5Progress" prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <Label fx:id="newFile5Name" text="Adpro_Project1.mp3" />
-                           </children>
-                           <padding>
-                              <Insets left="20.0" />
-                           </padding>
-                        </HBox>
-                     </children>
-                     <BorderPane.margin>
-                        <Insets left="30.0" right="10.0" />
-                     </BorderPane.margin>
-                  </VBox>
-               </left>
-               <right>
-                  <VBox fx:id="fileProgressBarZone" prefHeight="180.0" prefWidth="386.0" BorderPane.alignment="CENTER">
-                     <children>
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <ProgressBar fx:id="file1ProgressBar" prefWidth="200.0" progress="0.0" />
-                           </children>
-                        </HBox>
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <ProgressBar fx:id="file2ProgressBar" prefWidth="200.0" progress="0.0" />
-                           </children>
-                        </HBox>
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <ProgressBar fx:id="file3ProgressBar" prefWidth="200.0" progress="0.0" />
-                           </children>
-                        </HBox>
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <ProgressBar fx:id="file4ProgressBar" prefWidth="200.0" progress="0.0" />
-                           </children>
-                        </HBox>
-                        <HBox prefHeight="100.0" prefWidth="200.0">
-                           <children>
-                              <ProgressBar fx:id="file5ProgressBar" prefWidth="200.0" progress="0.0" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </right>
-            </BorderPane>
+                        </VBox>
+                     </right>
+                  </BorderPane>
+               </content>
+               <padding>
+                  <Insets top="15.0" />
+               </padding>
+            </ScrollPane>
          </children>
          <padding>
             <Insets top="5.0" />
          </padding>
+         <BorderPane.margin>
+            <Insets />
+         </BorderPane.margin>
       </VBox>
    </bottom>
 </BorderPane>
