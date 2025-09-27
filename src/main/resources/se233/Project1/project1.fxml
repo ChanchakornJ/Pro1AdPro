@@ -7,10 +7,14 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -18,53 +22,118 @@
    <right>
       <VBox fx:id="settingZoneArea" prefHeight="142.0" prefWidth="366.0" BorderPane.alignment="CENTER">
          <children>
-            <VBox fx:id="settingZone" prefHeight="200.0" prefWidth="100.0" style="-fx-border-color: black; -fx-border-radius: 5;">
-               <children>
-                  <HBox fx:id="qualityZone" prefHeight="31.0" prefWidth="253.0">
+            <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0">
+               <content>
+                  <VBox fx:id="settingZone" prefHeight="200.0" prefWidth="205.0" style="-fx-border-color: black; -fx-border-radius: 5;">
                      <children>
-                        <Label fx:id="qualityLabel" text="Quality" />
-                        <Slider fx:id="qualitySlider" majorTickUnit="64.0" max="320.0" minorTickCount="4" prefHeight="33.0" prefWidth="200.0" showTickLabels="true">
+                        <HBox fx:id="qualityZone" prefHeight="31.0" prefWidth="253.0">
+                           <children>
+                              <Label fx:id="qualityLabel" text="Quality" />
+                              <Slider fx:id="qualitySlider" majorTickUnit="64.0" max="320.0" minorTickCount="4" prefHeight="33.0" prefWidth="200.0" showTickLabels="true">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </Slider>
+                              <Label fx:id="kbpsLabel" text="kbps">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="fileFormatZone" prefHeight="27.0" prefWidth="253.0">
+                           <children>
+                              <Label fx:id="fileName" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
+                              <ComboBox fx:id="formatComboBox" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </ComboBox>
+                              <CheckBox fx:id="applyAllButton" alignment="BOTTOM_LEFT" mnemonicParsing="false" text="ApplyAll">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </CheckBox>
+                           </children>
                            <padding>
-                              <Insets left="5.0" />
+                              <Insets bottom="5.0" />
                            </padding>
-                        </Slider>
-                        <Label fx:id="kbpsLabel" text="kbps">
+                        </HBox>
+                        <HBox fx:id="fileFormatZone1" prefHeight="27.0" prefWidth="253.0">
+                           <children>
+                              <Label fx:id="fileName1" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
+                              <ComboBox fx:id="formatComboBox1" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </ComboBox>
+                           </children>
                            <padding>
-                              <Insets left="5.0" />
+                              <Insets bottom="5.0" />
                            </padding>
-                        </Label>
-                     </children>
-                  </HBox>
-                  <HBox fx:id="fileFormatZone" prefHeight="27.0" prefWidth="253.0">
-                     <children>
-                        <Label fx:id="fileName" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
-                        <ComboBox fx:id="formatComboBox" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
+                        </HBox>
+                        <HBox fx:id="fileFormatZone11" prefHeight="27.0" prefWidth="253.0">
+                           <children>
+                              <Label fx:id="fileName11" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
+                              <ComboBox fx:id="formatComboBox11" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </ComboBox>
+                           </children>
                            <padding>
-                              <Insets left="5.0" />
+                              <Insets bottom="5.0" />
                            </padding>
-                        </ComboBox>
-                        <CheckBox fx:id="applyAllButton" alignment="BOTTOM_LEFT" mnemonicParsing="false" text="ApplyAll">
+                        </HBox>
+                        <HBox fx:id="fileFormatZone12" prefHeight="27.0" prefWidth="253.0">
+                           <children>
+                              <Label fx:id="fileName12" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
+                              <ComboBox fx:id="formatComboBox12" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </ComboBox>
+                           </children>
                            <padding>
-                              <Insets left="5.0" />
+                              <Insets bottom="5.0" />
                            </padding>
-                        </CheckBox>
+                        </HBox>
+                        <HBox fx:id="fileFormatZone13" prefHeight="27.0" prefWidth="253.0">
+                           <children>
+                              <Label fx:id="fileName13" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
+                              <ComboBox fx:id="formatComboBox13" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
+                                 <padding>
+                                    <Insets left="5.0" />
+                                 </padding>
+                              </ComboBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="5.0" />
+                           </padding>
+                        </HBox>
                      </children>
                      <padding>
-                        <Insets bottom="5.0" />
+                        <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                      </padding>
-                  </HBox>
-               </children>
-               <VBox.margin>
-                  <Insets right="30.0" />
-               </VBox.margin>
-               <padding>
-                  <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-               </padding>
-            </VBox>
+                  </VBox>
+               </content>
+            </ScrollPane>
             <HBox fx:id="buttonArea" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <Button fx:id="convertButton" alignment="CENTER" mnemonicParsing="false" prefHeight="23.0" prefWidth="62.0" text="Convert" textAlignment="CENTER" HBox.hgrow="ALWAYS" />
-                  <Button fx:id="advancedSettingButton" alignment="BOTTOM_RIGHT" mnemonicParsing="false" text="Advanced Setting" HBox.hgrow="ALWAYS" />
+                  <Region prefHeight="29.0" prefWidth="104.0" />
+                  <Button fx:id="convertButton" alignment="CENTER" mnemonicParsing="false" prefHeight="23.0" prefWidth="62.0" text="CONVERT" textAlignment="CENTER" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font size="10.0" />
+                     </font></Button>
+                  <Region prefHeight="29.0" prefWidth="132.0" />
+                  <Button fx:id="advancedSettingButton" alignment="BOTTOM_RIGHT" mnemonicParsing="false" prefHeight="20.0" prefWidth="20.0" HBox.hgrow="ALWAYS">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../../Downloads/—Pngtree—settings%20icon_4419959.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
                </children>
                <VBox.margin>
                   <Insets top="10.0" />
@@ -105,10 +174,7 @@
       </VBox>
    </top>
    <bottom>
-      <VBox fx:id="fileProgressZonePane" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
-         <padding>
-            <Insets top="20.0" />
-         </padding>
+      <VBox fx:id="fileProgressZonePane" prefHeight="170.0" prefWidth="600.0" BorderPane.alignment="CENTER">
          <children>
             <BorderPane fx:id="fileProgressZone" prefHeight="200.0" prefWidth="200.0">
                <left>
@@ -193,6 +259,9 @@
                </right>
             </BorderPane>
          </children>
+         <padding>
+            <Insets top="5.0" />
+         </padding>
       </VBox>
    </bottom>
 </BorderPane>
