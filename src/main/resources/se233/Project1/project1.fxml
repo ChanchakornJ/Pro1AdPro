@@ -26,6 +26,7 @@
                <content>
                   <VBox fx:id="settingZone" prefHeight="200.0" prefWidth="205.0" style="-fx-border-color: black; -fx-border-radius: 5;">
                      <children>
+
                         <HBox fx:id="qualityZone" prefHeight="31.0" prefWidth="253.0">
                            <children>
                               <Label fx:id="qualityLabel" text="Quality" />
@@ -41,76 +42,80 @@
                               </Label>
                            </children>
                         </HBox>
-                        <HBox fx:id="fileFormatZone" prefHeight="27.0" prefWidth="253.0">
-                           <children>
-                              <Label fx:id="fileName" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
-                              <ComboBox fx:id="formatComboBox" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </ComboBox>
-                              <CheckBox fx:id="applyAllButton" alignment="BOTTOM_LEFT" mnemonicParsing="false" text="ApplyAll">
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </CheckBox>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="fileFormatZone1" prefHeight="27.0" prefWidth="253.0">
-                           <children>
-                              <Label fx:id="fileName1" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
-                              <ComboBox fx:id="formatComboBox1" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </ComboBox>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="fileFormatZone11" prefHeight="27.0" prefWidth="253.0">
-                           <children>
-                              <Label fx:id="fileName11" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
-                              <ComboBox fx:id="formatComboBox11" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </ComboBox>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="fileFormatZone12" prefHeight="27.0" prefWidth="253.0">
-                           <children>
-                              <Label fx:id="fileName12" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
-                              <ComboBox fx:id="formatComboBox12" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </ComboBox>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" />
-                           </padding>
-                        </HBox>
-                        <HBox fx:id="fileFormatZone13" prefHeight="27.0" prefWidth="253.0">
-                           <children>
-                              <Label fx:id="fileName13" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />
-                              <ComboBox fx:id="formatComboBox13" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">
-                                 <padding>
-                                    <Insets left="5.0" />
-                                 </padding>
-                              </ComboBox>
-                           </children>
-                           <padding>
-                              <Insets bottom="5.0" />
-                           </padding>
-                        </HBox>
+<!--                        <HBox fx:id="fileFormatZone" prefHeight="27.0" prefWidth="253.0">-->
+<!--                           <children>-->
+<!--                              <Label fx:id="fileName" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />-->
+<!--                              <ComboBox fx:id="formatComboBox" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">-->
+<!--                                 <padding>-->
+<!--                                    <Insets left="5.0" />-->
+<!--                                 </padding>-->
+<!--                              </ComboBox>-->
+<!--                              <CheckBox fx:id="applyAllButton" alignment="BOTTOM_LEFT" mnemonicParsing="false" text="ApplyAll">-->
+<!--                                 <padding>-->
+<!--                                    <Insets left="5.0" />-->
+<!--                                 </padding>-->
+<!--                              </CheckBox>-->
+<!--                           </children>-->
+<!--                           <padding>-->
+<!--                              <Insets bottom="5.0" />-->
+<!--                           </padding>-->
+<!--                        </HBox>-->
+<!--                        <HBox fx:id="fileFormatZone1" prefHeight="27.0" prefWidth="253.0">-->
+<!--                           <children>-->
+<!--                              <Label fx:id="fileName1" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />-->
+<!--                              <ComboBox fx:id="formatComboBox1" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">-->
+<!--                                 <padding>-->
+<!--                                    <Insets left="5.0" />-->
+<!--                                 </padding>-->
+<!--                              </ComboBox>-->
+<!--                           </children>-->
+<!--                           <padding>-->
+<!--                              <Insets bottom="5.0" />-->
+<!--                           </padding>-->
+<!--                        </HBox>-->
+<!--                        <HBox fx:id="fileFormatZone11" prefHeight="27.0" prefWidth="253.0">-->
+<!--                           <children>-->
+<!--                              <Label fx:id="fileName11" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />-->
+<!--                              <ComboBox fx:id="formatComboBox11" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">-->
+<!--                                 <padding>-->
+<!--                                    <Insets left="5.0" />-->
+<!--                                 </padding>-->
+<!--                              </ComboBox>-->
+<!--                           </children>-->
+<!--                           <padding>-->
+<!--                              <Insets bottom="5.0" />-->
+<!--                           </padding>-->
+<!--                        </HBox>-->
+<!--                        <HBox fx:id="fileFormatZone12" prefHeight="27.0" prefWidth="253.0">-->
+<!--                           <children>-->
+<!--                              <Label fx:id="fileName12" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />-->
+<!--                              <ComboBox fx:id="formatComboBox12" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">-->
+<!--                                 <padding>-->
+<!--                                    <Insets left="5.0" />-->
+<!--                                 </padding>-->
+<!--                              </ComboBox>-->
+<!--                           </children>-->
+<!--                           <padding>-->
+<!--                              <Insets bottom="5.0" />-->
+<!--                           </padding>-->
+<!--                        </HBox>-->
+<!--                        <HBox fx:id="fileFormatZone13" prefHeight="27.0" prefWidth="253.0">-->
+<!--                           <children>-->
+<!--                              <Label fx:id="fileName13" contentDisplay="CENTER" prefHeight="17.0" prefWidth="87.0" text="(File name)" />-->
+<!--                              <ComboBox fx:id="formatComboBox13" editable="true" prefHeight="12.0" prefWidth="150.0" promptText="format">-->
+<!--                                 <padding>-->
+<!--                                    <Insets left="5.0" />-->
+<!--                                 </padding>-->
+<!--                              </ComboBox>-->
+<!--                           </children>-->
+<!--                           <padding>-->
+<!--                              <Insets bottom="5.0" />-->
+<!--                           </padding>-->
+<!--                        </HBox>-->
+                        <VBox fx:id="fileSettingsContainer" spacing="5.0" prefWidth="205.0" >
+                           <!-- Rows will be added here dynamically from Java -->
+                        </VBox>
+
                      </children>
                      <padding>
                         <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
@@ -121,7 +126,7 @@
             <HBox fx:id="buttonArea" prefHeight="100.0" prefWidth="200.0">
                <children>
                   <Region prefHeight="29.0" prefWidth="104.0" />
-                  <Button fx:id="convertButton" alignment="CENTER" mnemonicParsing="false" prefHeight="23.0" prefWidth="62.0" text="CONVERT" textAlignment="CENTER" HBox.hgrow="ALWAYS">
+                  <Button fx:id="convertButton" alignment="CENTER" mnemonicParsing="false" prefHeight="23.0" prefWidth="62.0" text="CONVERT" textAlignment="CENTER" HBox.hgrow="ALWAYS" onAction="#changeFormat">
                      <font>
                         <Font size="10.0" />
                      </font></Button>
