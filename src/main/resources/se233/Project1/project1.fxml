@@ -18,6 +18,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.control.ListView?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="se233.Project1.controller.MainViewController">
    <right>
       <VBox fx:id="settingZoneArea" prefHeight="142.0" prefWidth="366.0" BorderPane.alignment="CENTER">
@@ -148,6 +149,8 @@
             <AnchorPane fx:id="dropZone" prefHeight="150.0" prefWidth="250.0" style="-fx-border-color: black; -fx-border-width: 1; -fx-border-radius: 10; -fx-padding: 10;" BorderPane.alignment="CENTER">
                <children>
                   <Label fx:id="dropFileLabel" layoutX="48.0" layoutY="67.0" text="drop the file here" />
+                  <ListView fx:id="inputListView" layoutX="20" layoutY="100" prefWidth="200" prefHeight="150" />
+                  //ตรงนี้เน้อ
                </children>
                <BorderPane.margin>
                   <Insets left="30.0" right="30.0" />
