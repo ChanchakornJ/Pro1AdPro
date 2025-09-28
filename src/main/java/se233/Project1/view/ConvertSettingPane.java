@@ -12,22 +12,22 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ConvertSettingPane {
 
-    private final Slider qualitySlider;
     private final VBox fileSettingsContainer;
     private final Map<String, ComboBox<String>> formatSelectors = new HashMap<>();
-    private final Button convertButton;
+    private Consumer<String> onFileSelected;
 
-    public ConvertSettingPane(Slider qualitySlider, VBox fileSettingsContainer, Button convertButton) {
-        this.qualitySlider = qualitySlider;
-        this.convertButton = convertButton;
+
+    public ConvertSettingPane(VBox fileSettingsContainer) {
         this.fileSettingsContainer = fileSettingsContainer;
-
-//        setupSlider();
         createDefaultRow();
+    }
 
+    public void setOnFileSelected(Consumer<String> listener) {
+        this.onFileSelected = listener;
     }
 
 
@@ -66,16 +66,14 @@ public class ConvertSettingPane {
 //        qualitySlider.setValue(1);
 //    }
 
-    public int getSelectedBitrate() {
-        int[] bitrates = {64, 128, 196, 320};
-        return bitrates[(int) qualitySlider.getValue()];
-    }
+
 
     private void createDefaultRow() {
         Label defaultLabel = new Label("(No file yet)");
         ComboBox<String> defaultCombo = new ComboBox<>();
-        defaultCombo.getItems().addAll("mp3", "wav", "ogg");
+        defaultCombo.getItems().addAll("mp3", "wav", "m4a", "ogg");
         defaultCombo.setValue("mp3");
+
 
         HBox row = new HBox(10, defaultLabel, defaultCombo);
         fileSettingsContainer.getChildren().add(row);
@@ -89,9 +87,17 @@ public class ConvertSettingPane {
         for (File file : files) {
             String fileName = file.getName();
             Label nameLabel = new Label(fileName);
+            nameLabel.setStyle("-fx-cursor: hand; -fx-text-fill: #0077cc;");
+
             ComboBox<String> comboBox = new ComboBox<>();
-            comboBox.getItems().addAll("mp3", "wav", "ogg");
+            comboBox.getItems().addAll("mp3", "wav", "m4a", "ogg");
             comboBox.setValue("mp3");
+
+            nameLabel.setOnMouseClicked(e -> {
+                if (onFileSelected != null) {
+                    onFileSelected.accept(fileName);
+                }
+            });
 
             HBox row = new HBox(10, nameLabel, comboBox);
             fileSettingsContainer.getChildren().add(row);
@@ -109,6 +115,11 @@ public class ConvertSettingPane {
             result.put(entry.getKey(), entry.getValue().getValue());
         }
         return result;
+    }
+
+    public String getFormatForFile(String fileName) {
+        ComboBox<String> comboBox = formatSelectors.get(fileName);
+        return comboBox != null ? comboBox.getValue() : "mp3";
     }
 
 }
