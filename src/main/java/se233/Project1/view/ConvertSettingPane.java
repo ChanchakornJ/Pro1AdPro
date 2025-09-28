@@ -25,46 +25,47 @@ public class ConvertSettingPane {
         this.convertButton = convertButton;
         this.fileSettingsContainer = fileSettingsContainer;
 
-        setupSlider();
+//        setupSlider();
         createDefaultRow();
 
     }
 
 
-    private void setupSlider() {
-        qualitySlider.setMin(0);
-        qualitySlider.setMax(3);
-        qualitySlider.setMajorTickUnit(1);
-        qualitySlider.setMinorTickCount(0);
-        qualitySlider.setSnapToTicks(true);
-        qualitySlider.setShowTickMarks(true);
-        qualitySlider.setShowTickLabels(true);
+//    private void setupSlider() {
+//        qualitySlider.setMin(0);
+//        qualitySlider.setMax(3);
+//        qualitySlider.setMajorTickUnit(1);
+//        qualitySlider.setMinorTickCount(0);
+//        qualitySlider.setSnapToTicks(true);
+//        qualitySlider.setShowTickMarks(true);
+//        qualitySlider.setShowTickLabels(true);
+//
+//        qualitySlider.setLabelFormatter(new StringConverter<Double>() {
+//            @Override
+//            public String toString(Double value) {
+//                return switch (value.intValue()) {
+//                    case 0 -> "64";
+//                    case 1 -> "128";
+//                    case 2 -> "196";
+//                    case 3 -> "320";
+//                    default -> "";
+//                };
+//            }
+//
+//            @Override
+//            public Double fromString(String string) {
+//                return switch (string) {
+//                    case "64" -> 0.0;
+//                    case "128" -> 1.0;
+//                    case "196" -> 2.0;
+//                    case "320" -> 3.0;
+//                    default -> 1.0;
+//                };
+//            }
+//        });
+//        qualitySlider.setValue(1);
+//    }
 
-        qualitySlider.setLabelFormatter(new StringConverter<Double>() {
-            @Override
-            public String toString(Double value) {
-                return switch (value.intValue()) {
-                    case 0 -> "64";
-                    case 1 -> "128";
-                    case 2 -> "196";
-                    case 3 -> "320";
-                    default -> "";
-                };
-            }
-
-            @Override
-            public Double fromString(String string) {
-                return switch (string) {
-                    case "64" -> 0.0;
-                    case "128" -> 1.0;
-                    case "196" -> 2.0;
-                    case "320" -> 3.0;
-                    default -> 1.0;
-                };
-            }
-        });
-        qualitySlider.setValue(1);
-    }
     public int getSelectedBitrate() {
         int[] bitrates = {64, 128, 196, 320};
         return bitrates[(int) qualitySlider.getValue()];
