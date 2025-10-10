@@ -15,6 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.layout.Pane?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="se233.Project1.controller.MainViewController">
    <right>
       <VBox fx:id="settingZoneArea" prefHeight="142.0" prefWidth="366.0" BorderPane.alignment="CENTER">
@@ -107,27 +108,61 @@
                   <Insets right="20.0" />
                </VBox.margin>
             </ScrollPane>
-            <HBox fx:id="buttonArea" prefHeight="100.0" prefWidth="200.0">
+<!--            <HBox fx:id="buttonArea" prefHeight="100.0" prefWidth="200.0" spacing="10">-->
+<!--               <children>-->
+<!--                  <Region prefHeight="29.0" prefWidth="104.0" />-->
+<!--                  <Button fx:id="convertButton" alignment="CENTER" mnemonicParsing="false" onAction="#changeFormat" prefHeight="23.0" prefWidth="62.0" text="CONVERT" textAlignment="CENTER" HBox.hgrow="ALWAYS">-->
+<!--                     <font>-->
+<!--                        <Font size="10.0" />-->
+<!--                     </font></Button>-->
+<!--                  <Region prefHeight="29.0" prefWidth="132.0" />-->
+<!--                  <Button fx:id="browseOutputButton" text="Browse Output Folder" onAction="#handleBrowseOutput"/>-->
+<!--                  <Label fx:id="outputPathLabel" text="No folder selected"/>-->
+<!--                  <Button fx:id="advancedSettingButton" alignment="BOTTOM_RIGHT" mnemonicParsing="false" onAction="#handleAdvancedSetting" prefHeight="20.0" prefWidth="20.0" HBox.hgrow="ALWAYS">-->
+<!--                     <graphic>-->
+<!--                        <ImageView fitHeight="20.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">-->
+<!--                           <image>-->
+<!--                              <Image url="@assets/—Pngtree—settings%20icon_4419959.png" />-->
+<!--                           </image>-->
+<!--                        </ImageView>-->
+<!--                     </graphic></Button>-->
+<!--               </children>-->
+<!--               <VBox.margin>-->
+<!--                  <Insets top="10.0" />-->
+<!--               </VBox.margin>-->
+<!--            </HBox>-->
+            <HBox fx:id="buttonArea" spacing="10" alignment="CENTER_RIGHT" prefHeight="50">
                <children>
-                  <Region prefHeight="29.0" prefWidth="104.0" />
-                  <Button fx:id="convertButton" alignment="CENTER" mnemonicParsing="false" onAction="#changeFormat" prefHeight="23.0" prefWidth="62.0" text="CONVERT" textAlignment="CENTER" HBox.hgrow="ALWAYS">
-                     <font>
-                        <Font size="10.0" />
-                     </font></Button>
-                  <Region prefHeight="29.0" prefWidth="132.0" />
-                  <Button fx:id="advancedSettingButton" alignment="BOTTOM_RIGHT" mnemonicParsing="false" onAction="#handleAdvancedSetting" prefHeight="20.0" prefWidth="20.0" HBox.hgrow="ALWAYS">
+                  <Button fx:id="convertButton"
+                          text="Convert"
+                          onAction="#changeFormat"
+                          minWidth="100"
+                          maxWidth="Infinity"/>
+
+                  <Button fx:id="browseOutputButton"
+                          text="Browse Output Folder"
+                          onAction="#handleBrowseOutput"
+                          minWidth="200" />
+
+
+                  <Pane HBox.hgrow="ALWAYS"/>
+
+                  <Button fx:id="advancedSettingButton"
+                          onAction="#handleAdvancedSetting"
+                          prefHeight="30"
+                          prefWidth="30"
+                          style="-fx-background-color: transparent;">
                      <graphic>
-                        <ImageView fitHeight="20.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                        <ImageView fitHeight="20" fitWidth="20" preserveRatio="true">
                            <image>
                               <Image url="@assets/—Pngtree—settings%20icon_4419959.png" />
                            </image>
                         </ImageView>
-                     </graphic></Button>
+                     </graphic>
+                  </Button>
                </children>
-               <VBox.margin>
-                  <Insets top="10.0" />
-               </VBox.margin>
             </HBox>
+
          </children>
       </VBox>
    </right>

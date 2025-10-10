@@ -11,8 +11,7 @@ public class LoadingPane {
         this.bars = bars;
         this.labels = new Label[bars.length];
 
-        // ⚠️ Optional: if labels are defined in FXML, pass them in the constructor too.
-        // OR dynamically create them if not already present.
+
     }
 
     public void attachLabels(Label... labels) {

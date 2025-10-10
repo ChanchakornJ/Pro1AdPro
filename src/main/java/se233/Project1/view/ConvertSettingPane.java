@@ -31,47 +31,12 @@ public class ConvertSettingPane {
     }
 
 
-//    private void setupSlider() {
-//        qualitySlider.setMin(0);
-//        qualitySlider.setMax(3);
-//        qualitySlider.setMajorTickUnit(1);
-//        qualitySlider.setMinorTickCount(0);
-//        qualitySlider.setSnapToTicks(true);
-//        qualitySlider.setShowTickMarks(true);
-//        qualitySlider.setShowTickLabels(true);
-//
-//        qualitySlider.setLabelFormatter(new StringConverter<Double>() {
-//            @Override
-//            public String toString(Double value) {
-//                return switch (value.intValue()) {
-//                    case 0 -> "64";
-//                    case 1 -> "128";
-//                    case 2 -> "196";
-//                    case 3 -> "320";
-//                    default -> "";
-//                };
-//            }
-//
-//            @Override
-//            public Double fromString(String string) {
-//                return switch (string) {
-//                    case "64" -> 0.0;
-//                    case "128" -> 1.0;
-//                    case "196" -> 2.0;
-//                    case "320" -> 3.0;
-//                    default -> 1.0;
-//                };
-//            }
-//        });
-//        qualitySlider.setValue(1);
-//    }
-
 
 
     private void createDefaultRow() {
         Label defaultLabel = new Label("(No file yet)");
         ComboBox<String> defaultCombo = new ComboBox<>();
-        defaultCombo.getItems().addAll("mp3", "wav", "m4a", "ogg");
+        defaultCombo.getItems().addAll("mp3", "wav", "m4a", "ogg", "mp4");
         defaultCombo.setValue("mp3");
 
 
@@ -90,10 +55,18 @@ public class ConvertSettingPane {
             nameLabel.setStyle("-fx-cursor: hand; -fx-text-fill: #0077cc;");
 
             ComboBox<String> comboBox = new ComboBox<>();
-            comboBox.getItems().addAll("mp3", "wav", "m4a", "ogg");
+            comboBox.getItems().addAll("mp3", "wav", "m4a", "flac", "ogg", "mp4");
             comboBox.setValue("mp3");
 
+            // 🔥 Fire callback when filename clicked
             nameLabel.setOnMouseClicked(e -> {
+                if (onFileSelected != null) {
+                    onFileSelected.accept(fileName);
+                }
+            });
+
+            // ✅ 🔥 Fire callback when format is changed
+            comboBox.setOnAction(e -> {
                 if (onFileSelected != null) {
                     onFileSelected.accept(fileName);
                 }
@@ -108,6 +81,8 @@ public class ConvertSettingPane {
             createDefaultRow();
         }
     }
+
+
 
     public Map<String, String> getSelectedFormats() {
         Map<String, String> result = new HashMap<>();

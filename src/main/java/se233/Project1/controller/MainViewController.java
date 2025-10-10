@@ -9,7 +9,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Popup;
+import se233.Project1.model.FileSettings;
 import se233.Project1.view.ConvertSettingPane;
 import se233.Project1.view.DropPane;
 import se233.Project1.view.LoadingPane;
@@ -28,15 +31,12 @@ public class MainViewController {
     @FXML private AnchorPane dropZone;
     @FXML private Label dropFileLabel;
 
-    @FXML private Slider qualitySlider;
-    @FXML private ComboBox<String> formatComboBox;
 
 
     @FXML private ProgressBar file1ProgressBar;
     @FXML private ProgressBar file2ProgressBar;
     @FXML private ProgressBar file3ProgressBar;
     @FXML private ProgressBar file4ProgressBar;
-    @FXML private ProgressBar file5ProgressBar;
     @FXML private VBox fileSettingsContainer;
     @FXML private Button convertButton;
     @FXML private Button advancedSettingButton;
@@ -45,7 +45,9 @@ public class MainViewController {
     @FXML private Label newFile3Name;
     @FXML private Label newFile4Name;
     @FXML private Label newFile5Name;
+    @FXML private Button browseOutputButton;
 
+    private File outputDirectory;
 
 
 
@@ -61,17 +63,16 @@ public class MainViewController {
     private String selectedBitDepth = "24-bit";
     private String selectedQuality = "Medium";
     private int selectedChannels = 2;
-    private final ExecutorService executor = Executors.newFixedThreadPool(4); // 4 threads = 4 files at once
-
-
-
-
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final Map<String, FileSettings> fileSettingsMap = new HashMap<>();
+    private String currentFileName;
+    private final Map<String, Node> settingsUIMap = new HashMap<>();
+    private File selectedImageFile;
     private Popup advancedPopup;
 
     @FXML
     public void initialize() {
         convertPane = new ConvertSettingPane(fileSettingsContainer);
-
         loadingPane = new LoadingPane(file1ProgressBar, file2ProgressBar, file3ProgressBar, file4ProgressBar);
         loadingPane.attachLabels(newFile1Name, newFile2Name, newFile3Name, newFile4Name, newFile5Name);
 
@@ -81,8 +82,9 @@ public class MainViewController {
 
         convertPane.setOnFileSelected(fileName -> {
             String format = convertPane.getFormatForFile(fileName);
-            showAdvancedSettingsFor(format);
+            showAdvancedSettingsFor(fileName, format);
         });
+
     }
 
 
@@ -91,10 +93,16 @@ public class MainViewController {
     public void changeFormat() {
         System.out.println("changeFormat called");
         Map<String, String> selectedFormats = convertPane.getSelectedFormats();
-        if (selectedFormats.isEmpty()) {
-            System.out.println("No files to convert.");
+        if (selectedFormats.isEmpty() || filePathMap.isEmpty()) {
+            Alert noFileAlert = new Alert(Alert.AlertType.WARNING);
+            noFileAlert.setTitle("No Files Selected");
+            noFileAlert.setHeaderText("Nothing to convert");
+            noFileAlert.setContentText("Please add at least one file before converting.");
+            noFileAlert.showAndWait();
             return;
         }
+
+
 
         int index = 0;
         for (Map.Entry<String, String> entry : selectedFormats.entrySet()) {
@@ -106,7 +114,14 @@ public class MainViewController {
             String inputPath = filePathMap.get(fileName);
             if (inputPath == null) continue;
 
-            String outputPath = inputPath.substring(0, inputPath.lastIndexOf('.')) + "." + selectedFormat;
+            String outputPath;
+            if (outputDirectory != null) {
+                outputPath = new File(outputDirectory,
+                        fileName.substring(0, fileName.lastIndexOf('.')) + "." + selectedFormat
+                ).getAbsolutePath();
+            } else {
+                outputPath = inputPath.substring(0, inputPath.lastIndexOf('.')) + "." + selectedFormat;
+            }
 
             javafx.application.Platform.runLater(() -> loadingPane.showProgress(progressIndex, fileName));
 
@@ -114,20 +129,24 @@ public class MainViewController {
                 try {
                     ChangeFormatTask task = new ChangeFormatTask("/opt/homebrew/bin/ffmpeg", "/opt/homebrew/bin/ffprobe");
 
+                    FileSettings settings = fileSettingsMap.getOrDefault(fileName, new FileSettings(128, 44100, 2));
                     task.convertToFormatWithProgress(
                             inputPath,
                             outputPath,
                             selectedFormat,
-                            (int) selectedAdvancedBitrate,
-                            selectedChannels,
-                            (int) selectedSampleRate,
+                            (int) settings.bitrate,
+                            settings.channels,
+                            (int) settings.sampleRate,
+                            settings.isVBR,
+                            selectedImageFile,
                             progress -> updateProgressUI(progressIndex, fileName, progress)
                     );
 
-                    System.out.println("✅ Converted: " + fileName + " → " + outputPath);
+
+                    System.out.println("Converted: " + fileName + " → " + outputPath);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("❌ Conversion failed for: " + fileName);
+                    System.out.println("Conversion failed for: " + fileName);
                 }
             });
         }
@@ -159,85 +178,20 @@ public class MainViewController {
         }
     }
 
-//    private Node createSetting(String ext) {
-//        VBox container = new VBox(5);
-//        container.setStyle("-fx-padding: 10;");
-//
-//        Slider slider = new Slider();
-//        Label currentLabel = new Label();
-//
-//        double[] values;
-//        String[] labels;
-//        double defaultValue;
-//
-//        switch (ext.toLowerCase()) {
-//            case "mp3":
-//                values = new double[]{64, 128, 192, 320};
-//                labels = new String[]{"Economy", "Standard", "Good", "Best"};
-//                defaultValue = 128; // Standard
-//                break;
-//            case "ogg":
-//                values = new double[]{64, 128, 192, 320};
-//                labels = new String[]{"Economy", "Standard", "Good", "Best"};
-//                defaultValue = 192; // Good
-//                break;
-//            case "wav":
-//                values = new double[]{20, 44.1, 48, 96};
-//                labels = new String[]{"Tape", "CD", "DVD", "Extra High"};
-//                defaultValue = 44.1; // CD
-//                break;
-//            default:
-//                container.getChildren().add(new Label("No advanced settings for " + ext));
-//                return container;
-//        }
-//
-//        // ตั้งค่า slider
-//        slider.setMin(values[0]);
-//        slider.setMax(values[values.length - 1]);
-//        slider.setValue(defaultValue);
-//        slider.setShowTickMarks(true);
-//        slider.setShowTickLabels(true);
-//        slider.setSnapToTicks(true); // ปิด snap ปกติ
-//        slider.setMajorTickUnit(values[1] - values[0]);
-//        slider.setMinorTickCount(0);
-//
-//        // ฟังก์ชันหา closest value และ update label
-//        Runnable updateLabel = () -> {
-//            int index = 0;
-//            double closest = values[0];
-//            for (int i = 0; i < values.length; i++) {
-//                if (Math.abs(slider.getValue() - values[i]) < Math.abs(slider.getValue() - closest)) {
-//                    closest = values[i];
-//                    index = i;
-//                }
-//            }
-//            slider.setValue(values[index]);
-//            currentLabel.setText("Selected: " + labels[index]);
-//
-//            // ✅ Save this to use during conversion
-//            selectedAdvancedBitrate = values[index];
-//        };
-//
-//
-//        // เรียกครั้งแรก
-//        updateLabel.run();
-//
-//        // listener
-//        slider.valueProperty().addListener((obs, oldVal, newVal) -> updateLabel.run());
-//
-//        container.getChildren().addAll(new Label(ext.toUpperCase() + " Quality"), slider, currentLabel);
-//        return container;
-//    }
+
     private Node createSetting(String ext) {
         VBox container = new VBox(5);
         container.setStyle("-fx-padding: 10;");
-        container.setPrefSize(200, 180);
+        container.setPrefSize(300, 180);
 
         switch (ext.toLowerCase()) {
             case "mp3" -> buildMp3Settings(container);
             case "wav" -> buildWavSettings(container);
             case "m4a" -> buildM4aSettings(container);
+            case "flac" -> buildFlacSettings(container);
             case "ogg" -> buildOggSettings(container);
+            case "mp4" -> buildMp4Settings(container);
+
             default -> container.getChildren().add(new Label("No advanced settings for " + ext));
         }
 
@@ -245,26 +199,44 @@ public class MainViewController {
     }
 
 
-    private void showAdvancedSettingsFor(String format) {
+    private void showAdvancedSettingsFor(String fileName, String format) {
+        this.currentFileName = fileName;
+
+        // ✅ Create or retrieve the settings object for this file
+        FileSettings fs = fileSettingsMap.computeIfAbsent(fileName, f -> new FileSettings(128, 44100, 2));
+
+        // ✅ If the format changed, clear the old UI so a new one is built
+        if (fs.format != null && !fs.format.equalsIgnoreCase(format)) {
+            settingsUIMap.remove(fileName);
+        }
+
+        // ✅ Always store the current format for reference
+        fs.format = format;
+
+        // 🔁 Now continue with the UI logic
         if (advancedPopup != null && advancedPopup.isShowing()) {
             advancedPopup.hide();
         }
 
-        advancedPopup = new Popup();
-        Node settingsUI = createSetting(format);
+        Node settingsUI = settingsUIMap.computeIfAbsent(fileName, f -> createSetting(format));
 
+        advancedPopup = new Popup();
         VBox popupContent = new VBox(10, settingsUI);
         popupContent.setStyle("-fx-background-color: white; -fx-padding: 10; -fx-border-color: gray;");
-        popupContent.setPrefSize(300, 200);
-        popupContent.setMinSize(300, 200);
-        popupContent.setMaxSize(300, 200);
+        popupContent.setPrefSize(300, 300);
+        popupContent.setMinSize(300, 300);
+        popupContent.setMaxSize(300, 300);
+
         advancedPopup.getContent().clear();
         advancedPopup.getContent().add(popupContent);
 
         Bounds bounds = advancedSettingButton.localToScreen(advancedSettingButton.getBoundsInLocal());
         advancedPopup.show(advancedSettingButton, bounds.getMaxX() + 5, bounds.getMinY());
     }
+
+
     private void buildMp3Settings(VBox container) {
+        // --- 🔊 Always-visible Quality Slider ---
         Label bitrateLabel = new Label("MP3 Quality");
         Slider bitrateSlider = new Slider();
         Label bitrateCurrentLabel = new Label();
@@ -301,20 +273,180 @@ public class MainViewController {
         bitrateSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
             int index = newVal.intValue();
             bitrateCurrentLabel.setText("Quality: " + bitrateValues[index] + " kbps (" + bitrateLabels[index] + ")");
-            selectedAdvancedBitrate = bitrateValues[index];
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).bitrate = bitrateValues[index];
         });
 
         bitrateSlider.setValue(1);
         bitrateCurrentLabel.setText("Quality: " + bitrateValues[1] + " kbps (" + bitrateLabels[1] + ")");
-        selectedAdvancedBitrate = bitrateValues[1];
 
+        // --- ⚙️ Bitrate Mode Section (NEW) ---
+        Label modeLabel = new Label("Bitrate Mode");
+        RadioButton constantRadio = new RadioButton("Constant");
+        RadioButton variableRadio = new RadioButton("Variable");
+        ToggleGroup modeGroup = new ToggleGroup();
+        constantRadio.setToggleGroup(modeGroup);
+        variableRadio.setToggleGroup(modeGroup);
+        constantRadio.setSelected(true);
+
+        HBox modeRow = new HBox(10, modeLabel, constantRadio, variableRadio);
+
+// --- Bitrate selection row (SAME LINE) ---
+        Label bitrateChoiceLabel = new Label("Bitrate:");
+        ComboBox<String> constantBox = new ComboBox<>();
+        constantBox.getItems().addAll("32 kbps", "40 kbps", "48 kbps", "56 kbps", "64 kbps", "80 kbps", "96 kbps", "112 kbps", "128 kbps" , "160 kbps",  "192 kbps", "224 kbps", "256 kbps", "320 kbps");
+        constantBox.setValue(bitrateValues[1] + " kbps");
+
+        bitrateSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int index = newVal.intValue();
+            String bitrateText = bitrateValues[index] + " kbps (" + bitrateLabels[index] + ")";
+            bitrateCurrentLabel.setText("Quality: " + bitrateText);
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).bitrate = bitrateValues[index];
+
+            constantBox.setValue(bitrateValues[index] + " kbps"); // 🔄 Keep ComboBox in sync
+        });
+
+        ComboBox<String> variableBox = new ComboBox<>();
+        variableBox.getItems().addAll("V0 (Highest)", "V1", "V2", "V3", "V4", "V5 (Lowest)");
+        variableBox.setValue("V2");
+        variableBox.setVisible(false);
+
+// Put both dropdowns in same HBox so layout stays the same
+        HBox bitrateChoiceRow = new HBox(10, bitrateChoiceLabel, constantBox, variableBox);
+
+// Toggle between the two dropdowns
+        modeGroup.selectedToggleProperty().addListener((obs, oldT, newT) -> {
+            boolean isConstant = constantRadio.isSelected();
+            constantBox.setVisible(isConstant);
+            variableBox.setVisible(!isConstant);
+
+            FileSettings fs = fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2));
+            fs.isVBR = !isConstant;
+        });
+
+// Save bitrate choices
+        constantBox.setOnAction(e -> {
+            double bitrate = Double.parseDouble(constantBox.getValue().replace(" kbps", ""));
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).bitrate = bitrate;
+        });
+
+        variableBox.setOnAction(e -> {
+            int vbrLevel = switch (variableBox.getValue()) {
+                case "V0 (Highest)" -> 0;
+                case "V1" -> 1;
+                case "V2" -> 2;
+                case "V3" -> 3;
+                case "V4" -> 4;
+                case "V5 (Lowest)" -> 5;
+                default -> 2;
+            };
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).bitrate = vbrLevel;
+        });
+
+        // --- 📶 Sample Rate ---
         Label sampleRateLabel = new Label("Sample Rate");
         ComboBox<String> sampleRateBox = new ComboBox<>();
-        sampleRateBox.getItems().addAll("22050 Hz", "44100 Hz", "48000 Hz", "96000 Hz");
+        sampleRateBox.getItems().addAll("32000 Hz", "44100 Hz", "48000 Hz");
         sampleRateBox.setValue("44100 Hz");
         sampleRateBox.setOnAction(e -> {
-            selectedSampleRate = Double.parseDouble(sampleRateBox.getValue().replace(" Hz", ""));
-            System.out.println("Sample Rate: " + selectedSampleRate);
+            double sr = Double.parseDouble(sampleRateBox.getValue().replace(" Hz", ""));
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).sampleRate = sr;
+        });
+
+        // --- 🔊 Channels ---
+        Label channelsLabel = new Label("Channels");
+        ComboBox<String> channelsBox = new ComboBox<>();
+        channelsBox.getItems().addAll("1 (Mono)", "2 (Stereo)");
+        channelsBox.setValue("2 (Stereo)");
+        channelsBox.setOnAction(e -> {
+            int ch = channelsBox.getValue().startsWith("1") ? 1 : 2;
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).channels = ch;
+        });
+        modeGroup.selectedToggleProperty().addListener((obs, oldT, newT) -> {
+            boolean isConstant = constantRadio.isSelected();
+            constantBox.setVisible(isConstant);
+            variableBox.setVisible(!isConstant);
+
+            FileSettings fs = fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2));
+            fs.isVBR = !isConstant;
+        });
+
+
+        container.getChildren().addAll(
+                bitrateLabel, bitrateSlider, bitrateCurrentLabel,
+                modeRow,
+                bitrateChoiceRow,
+                sampleRateLabel, sampleRateBox,
+                channelsLabel, channelsBox
+        );
+
+    }
+
+
+
+    private void buildWavSettings(VBox container) {
+
+        Label bitrateLabel = new Label("wav Quality");
+        Slider bitrateSlider = new Slider();
+        Label bitrateCurrentLabel = new Label();
+
+        double[] bitrateValues = {20, 44.1, 48, 96};
+        String[] bitrateLabels = {"Tape", "CD Quality", "DVD", "Extra High"};
+
+        bitrateSlider.setMin(0);
+        bitrateSlider.setMax(3);
+        bitrateSlider.setMajorTickUnit(1);
+        bitrateSlider.setMinorTickCount(0);
+        bitrateSlider.setSnapToTicks(true);
+        bitrateSlider.setShowTickMarks(true);
+        bitrateSlider.setShowTickLabels(true);
+
+        bitrateSlider.setLabelFormatter(new StringConverter<Double>() {
+            @Override
+            public String toString(Double value) {
+                return String.valueOf(bitrateValues[value.intValue()]);
+            }
+
+            @Override
+            public Double fromString(String string) {
+                return switch (string) {
+                    case "20" -> 0.0;
+                    case "44.1" -> 1.0;
+                    case "48" -> 2.0;
+                    case "96" -> 3.0;
+                    default -> 1.0;
+                };
+            }
+        });
+
+        bitrateSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int index = newVal.intValue();
+            bitrateCurrentLabel.setText("Quality: " + bitrateValues[index] + " Khz (" + bitrateLabels[index] + ")");
+            selectedAdvancedBitrate = bitrateValues[index];
+        });
+
+        bitrateSlider.setValue(2);
+        bitrateCurrentLabel.setText("Quality: " + bitrateValues[1] + " Khz (" + bitrateLabels[1] + ")");
+        selectedAdvancedBitrate = bitrateValues[1];
+
+        // --- Sample Rate ---
+        Label srLabel = new Label("Sample Rate");
+        ComboBox<String> sampleRateBox = new ComboBox<>();
+        sampleRateBox.getItems().addAll(
+                "8000 Hz",
+                "11025 Hz",
+                "16000 Hz",
+                "22050 Hz",
+                "32000 Hz",
+                "44100 Hz",
+                "48000 Hz",
+                "88200 Hz",
+                "96000 Hz"
+        );
+        sampleRateBox.setValue("48000 Hz");
+        sampleRateBox.setOnAction(e -> {
+            double sr = Double.parseDouble(sampleRateBox.getValue().replace(" Hz", ""));
+            selectedSampleRate = sr;
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).sampleRate = sr;
         });
 
         Label channelsLabel = new Label("Channels");
@@ -322,41 +454,18 @@ public class MainViewController {
         channelsBox.getItems().addAll("1 (Mono)", "2 (Stereo)");
         channelsBox.setValue("2 (Stereo)");
         channelsBox.setOnAction(e -> {
-            selectedChannels = channelsBox.getValue().startsWith("1") ? 1 : 2;
-            System.out.println("Channels: " + selectedChannels);
+            int ch = channelsBox.getValue().startsWith("1") ? 1 : 2;
+            fileSettingsMap.computeIfAbsent(currentFileName, f -> new FileSettings(128, 44100, 2)).channels = ch;
         });
 
-        container.getChildren().addAll(
-                bitrateLabel, bitrateSlider, bitrateCurrentLabel,
-                sampleRateLabel, sampleRateBox,
-                channelsLabel, channelsBox
-        );
-    }
-
-
-    private void buildWavSettings(VBox container) {
-        // --- Sample Rate ---
-        Label srLabel = new Label("Sample Rate");
-        ComboBox<String> sampleRateBox = new ComboBox<>();
-        sampleRateBox.getItems().addAll("44100 Khz", "48000 Khz", "96000 Khz");
-        sampleRateBox.setValue("48000 Khz");
-        sampleRateBox.setOnAction(e -> selectedSampleRate = Double.parseDouble(sampleRateBox.getValue().replace(" Hz", "")));
-
-        // --- Bit Depth ---
-        Label bitDepthLabel = new Label("Bit Depth");
-        ComboBox<String> bitDepthBox = new ComboBox<>();
-        bitDepthBox.getItems().addAll("16-bit", "24-bit", "32-bit");
-        bitDepthBox.setValue("24-bit");
-        bitDepthBox.setOnAction(e -> selectedBitDepth = bitDepthBox.getValue());
-
-        container.getChildren().addAll(srLabel, sampleRateBox, bitDepthLabel, bitDepthBox);
+        container.getChildren().addAll(bitrateLabel, bitrateSlider, bitrateCurrentLabel,srLabel, sampleRateBox, channelsLabel, channelsBox);
     }
     private void buildM4aSettings(VBox container){
         Label bitrateLabel = new Label("m4a Quality");
         Slider bitrateSlider = new Slider();
         Label bitrateCurrentLabel = new Label();
 
-        double[] bitrateValues = {64, 128, 160, 265};
+        double[] bitrateValues = {64, 128, 160, 256};
         String[] bitrateLabels = {"Economy", "Standard", "Good", "Best"};
 
         bitrateSlider.setMin(0);
@@ -379,8 +488,8 @@ public class MainViewController {
                     case "64" -> 0.0;
                     case "128" -> 1.0;
                     case "160" -> 2.0;
-                    case "265" -> 3.0;
-                    default -> 1.0;
+                    case "256" -> 3.0;
+                    default -> 2.0;
                 };
             }
         });
@@ -391,7 +500,7 @@ public class MainViewController {
             selectedAdvancedBitrate = bitrateValues[index];
         });
 
-        bitrateSlider.setValue(1);
+        bitrateSlider.setValue(2);
         bitrateCurrentLabel.setText("Quality: " + bitrateValues[1] + " kbps (" + bitrateLabels[1] + ")");
         selectedAdvancedBitrate = bitrateValues[1];
 
@@ -420,33 +529,189 @@ public class MainViewController {
         );
     }
     private void buildOggSettings(VBox container) {
-        Label bitrateLabel = new Label("Bitrate");
-        Slider bitrateSlider = new Slider(0, 3, 1);
-        double[] bitrates = {64, 128, 196, 320};
+        Label bitrateLabel = new Label("Ogg Quality");
+        Slider bitrateSlider = new Slider();
+        Label bitrateCurrentLabel = new Label();
+
+        double[] bitrateValues = {64, 128, 160, 256};
+        String[] bitrateLabels = {"Economy", "Standard", "Good", "Best"};
+
+        bitrateSlider.setMin(0);
+        bitrateSlider.setMax(3);
         bitrateSlider.setMajorTickUnit(1);
+        bitrateSlider.setMinorTickCount(0);
         bitrateSlider.setSnapToTicks(true);
         bitrateSlider.setShowTickMarks(true);
         bitrateSlider.setShowTickLabels(true);
+
         bitrateSlider.setLabelFormatter(new StringConverter<Double>() {
             @Override
-            public String toString(Double val) {
-                return bitrates[val.intValue()] + " kbps";
+            public String toString(Double value) {
+                return String.valueOf(bitrateValues[value.intValue()]);
             }
 
             @Override
-            public Double fromString(String s) {
-                return 0.0;
+            public Double fromString(String string) {
+                return switch (string) {
+                    case "64" -> 0.0;
+                    case "128" -> 1.0;
+                    case "160" -> 2.0;
+                    case "256" -> 3.0;
+                    default -> 2.0;
+                };
             }
         });
-        bitrateSlider.valueProperty().addListener((obs, oldV, newV) -> selectedAdvancedBitrate = bitrates[newV.intValue()]);
 
-        // --- Quality Preset ---
-        Label qualityLabel = new Label("Quality Preset");
-        ComboBox<String> qualityBox = new ComboBox<>(FXCollections.observableArrayList("Low", "Medium", "High"));
-        qualityBox.setValue("Medium");
-        qualityBox.setOnAction(e -> selectedQuality = qualityBox.getValue());
+        bitrateSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int index = newVal.intValue();
+            bitrateCurrentLabel.setText("Quality: " + bitrateValues[index] + " kbps (" + bitrateLabels[index] + ")");
+            selectedAdvancedBitrate = bitrateValues[index];
+        });
 
-        container.getChildren().addAll(bitrateLabel, bitrateSlider, qualityLabel, qualityBox);
+        bitrateSlider.setValue(2);
+        bitrateCurrentLabel.setText("Quality: " + bitrateValues[1] + " kbps (" + bitrateLabels[1] + ")");
+        selectedAdvancedBitrate = bitrateValues[1];
+
+        Label sampleRateLabel = new Label("Sample Rate");
+        ComboBox<String> sampleRateBox = new ComboBox<>();
+        sampleRateBox.getItems().addAll("8000 Khz", "11025 Khz", "12000 Khz", "16000 Khz", "22050 Khz", "24000 Khz", "3200 Khz", "44100 Khz", "48000 Khz");
+        sampleRateBox.setValue("44100 Hz");
+        sampleRateBox.setOnAction(e -> {
+            selectedSampleRate = Double.parseDouble(sampleRateBox.getValue().replace(" Khz", ""));
+            System.out.println("Sample Rate: " + selectedSampleRate);
+        });
+
+        Label channelsLabel = new Label("Channels");
+        ComboBox<String> channelsBox = new ComboBox<>();
+        channelsBox.getItems().addAll("1 (Mono)", "2 (Stereo)");
+        channelsBox.setValue("2 (Stereo)");
+        channelsBox.setOnAction(e -> {
+            selectedChannels = channelsBox.getValue().startsWith("1") ? 1 : 2;
+            System.out.println("Channels: " + selectedChannels);
+        });
+
+        container.getChildren().addAll(
+                bitrateLabel, bitrateSlider, bitrateCurrentLabel,
+                sampleRateLabel, sampleRateBox,
+                channelsLabel, channelsBox
+        );
+    }
+
+    public void buildFlacSettings(VBox container){
+        Label bitrateLabel = new Label("Bitrate: 128 kbps");
+        selectedAdvancedBitrate = 32;
+        Label sampleRateLabel = new Label("Sample Rate");
+        ComboBox<String> sampleRateBox = new ComboBox<>();
+        sampleRateBox.getItems().addAll("8000 Khz", "11025 Khz", "12000 Khz", "16000 Khz", "22050 Khz", "24000 Khz", "32000 Khz", "44100 Khz", "48000 Khz");
+        sampleRateBox.setValue("44100 Hz");
+        sampleRateBox.setOnAction(e -> {
+            selectedSampleRate = Double.parseDouble(sampleRateBox.getValue().replace(" Khz", ""));
+            System.out.println("Sample Rate: " + selectedSampleRate);
+        });
+
+        Label channelsLabel = new Label("Channels");
+        ComboBox<String> channelsBox = new ComboBox<>();
+        channelsBox.getItems().addAll("1 (Mono)", "2 (Stereo)");
+        channelsBox.setValue("2 (Stereo)");
+        channelsBox.setOnAction(e -> {
+            selectedChannels = channelsBox.getValue().startsWith("1") ? 1 : 2;
+            System.out.println("Channels: " + selectedChannels);
+        });
+
+                container.getChildren().addAll(
+                bitrateLabel,
+                sampleRateLabel, sampleRateBox,
+                channelsLabel, channelsBox
+        );
+
+    }
+    public void buildMp4Settings(VBox container) {
+        Label bitrateLabel = new Label("Mp4 Quality");
+        Slider bitrateSlider = new Slider();
+        Label bitrateCurrentLabel = new Label();
+
+        double[] bitrateValues = {64, 128, 160, 256};
+        String[] bitrateLabels = {"Economy", "Standard", "Good", "Best"};
+
+        bitrateSlider.setMin(0);
+        bitrateSlider.setMax(3);
+        bitrateSlider.setMajorTickUnit(1);
+        bitrateSlider.setMinorTickCount(0);
+        bitrateSlider.setSnapToTicks(true);
+        bitrateSlider.setShowTickMarks(true);
+        bitrateSlider.setShowTickLabels(true);
+
+        bitrateSlider.setLabelFormatter(new StringConverter<Double>() {
+            @Override
+            public String toString(Double value) {
+                return String.valueOf(bitrateValues[value.intValue()]);
+            }
+
+            @Override
+            public Double fromString(String string) {
+                return switch (string) {
+                    case "64" -> 0.0;
+                    case "128" -> 1.0;
+                    case "160" -> 2.0;
+                    case "256" -> 3.0;
+                    default -> 2.0;
+                };
+            }
+        });
+
+        bitrateSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            int index = newVal.intValue();
+            bitrateCurrentLabel.setText("Quality: " + bitrateValues[index] + " kbps (" + bitrateLabels[index] + ")");
+            selectedAdvancedBitrate = bitrateValues[index];
+        });
+
+        bitrateSlider.setValue(2);
+        bitrateCurrentLabel.setText("Quality: " + bitrateValues[1] + " kbps (" + bitrateLabels[1] + ")");
+        selectedAdvancedBitrate = bitrateValues[1];
+
+        Label sampleRateLabel = new Label("Sample Rate");
+        ComboBox<String> sampleRateBox = new ComboBox<>();
+        sampleRateBox.getItems().addAll("8000 Khz", "11025 Khz", "12000 Khz", "16000 Khz", "22050 Khz", "24000 Khz", "3200 Khz", "44100 Khz", "48000 Khz");
+        sampleRateBox.setValue("44100 Hz");
+        sampleRateBox.setOnAction(e -> {
+            selectedSampleRate = Double.parseDouble(sampleRateBox.getValue().replace(" Khz", ""));
+            System.out.println("Sample Rate: " + selectedSampleRate);
+        });
+
+        Label channelsLabel = new Label("Channels");
+        ComboBox<String> channelsBox = new ComboBox<>();
+        channelsBox.getItems().addAll("1 (Mono)", "2 (Stereo)");
+        channelsBox.setValue("2 (Stereo)");
+        channelsBox.setOnAction(e -> {
+            selectedChannels = channelsBox.getValue().startsWith("1") ? 1 : 2;
+            System.out.println("Channels: " + selectedChannels);
+        });
+
+        Label imageLabel = new Label("Thumbnail Image:");
+        Label selectedImageLabel = new Label("No image selected");
+        Button chooseImageButton = new Button("Choose Image");
+
+        chooseImageButton.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select Thumbnail Image");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
+            );
+            File file = fileChooser.showOpenDialog(chooseImageButton.getScene().getWindow());
+            if (file != null) {
+                selectedImageFile = file;
+                selectedImageLabel.setText("✅ " + file.getName());
+            }
+        });
+
+        HBox imageRow = new HBox(10, imageLabel, chooseImageButton, selectedImageLabel);
+
+        container.getChildren().addAll(
+                bitrateLabel, bitrateSlider, bitrateCurrentLabel,
+                sampleRateLabel, sampleRateBox,
+                channelsLabel, channelsBox,
+                imageRow
+        );
     }
     private void updateProgressUI(int index, String fileName, double progress) {
         javafx.application.Platform.runLater(() -> {
@@ -454,6 +719,27 @@ public class MainViewController {
             loadingPane.setProgress(index, progress);
         });
     }
+    @FXML
+    private void handleBrowseOutput(ActionEvent event) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("Select Output Folder");
+
+        File selectedDir = directoryChooser.showDialog(browseOutputButton.getScene().getWindow());
+        if (selectedDir != null) {
+            outputDirectory = selectedDir; // ✅ store as File
+
+            // Change button text to show the folder name
+            String folderName = selectedDir.getName();
+            if (folderName.length() > 20) {
+                folderName = folderName.substring(0, 17) + "...";
+            }
+            browseOutputButton.setText("📁 " + folderName);
+        }
+    }
+
+
+
+
 
     @FXML
     public void onExit() {
