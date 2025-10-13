@@ -5,21 +5,23 @@ import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
-import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
 import net.bramp.ffmpeg.job.FFmpegJob;
 import net.bramp.ffmpeg.probe.FFmpegFormat;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.function.Consumer;
 
 public class ChangeFormatTask {
 
     private final FFmpeg ffmpeg;
     private final FFprobe ffprobe;
+    private final String ffmpegPath;
+    private final String ffprobePath;
 
     public ChangeFormatTask(String ffmpegPath, String ffprobePath) throws IOException {
+        this.ffmpegPath = ffmpegPath;
+        this.ffprobePath = ffprobePath;
         this.ffmpeg = new FFmpeg(ffmpegPath);
         this.ffprobe = new FFprobe(ffprobePath);
     }
@@ -32,96 +34,180 @@ public class ChangeFormatTask {
             int channels,
             int sampleRate,
             boolean isVBR,
-            File imageFile,
+            File mediaFile,
             Consumer<Double> progressCallback
     ) throws IOException {
 
-       FFmpegProbeResult audioProbe = ffprobe.probe(inputPath);
-        FFmpegFormat audioFormat = audioProbe.getFormat();
-        double duration = audioFormat.duration;
-        if (Double.isNaN(duration) || duration <= 0) {
-            duration = 1;
-        }
-        final double totalDurationSeconds = duration;
-
-        System.out.println("🔎 Probing: " + inputPath);
         File inputFile = new File(inputPath);
         if (!inputFile.exists()) {
             throw new IOException("Input file does not exist: " + inputPath);
         }
 
-        FFmpegBuilder builder = new FFmpegBuilder();
-        if ("mp4".equalsIgnoreCase(format) && imageFile != null && imageFile.exists()) {
-            builder.addInput(imageFile.getAbsolutePath());
-            builder.addInput(inputPath);
-        } else {
-            builder.setInput(inputPath);
+        FFmpegProbeResult probe = ffprobe.probe(inputPath);
+        FFmpegFormat meta = probe.getFormat();
+        double duration = (meta != null && meta.duration > 0) ? meta.duration : -1;
+        final double totalDuration = duration;
+
+        boolean isVideo = false;
+        if (mediaFile != null && mediaFile.exists()) {
+            String name = mediaFile.getName().toLowerCase();
+            isVideo = name.endsWith(".mp4") || name.endsWith(".mov") ||
+                    name.endsWith(".avi") || name.endsWith(".mkv");
         }
 
-        String outputFormat = format.toLowerCase();
-        if (outputFormat.equals("m4a")) {
-            outputFormat = "ipod";
-        }
 
-        FFmpegOutputBuilder output = builder.addOutput(outputPath)
-                .setFormat(outputFormat)
-                .setAudioChannels(channels)
-                .setAudioSampleRate(sampleRate);
+        // CASE 1: MP4 output
 
-        if ("mp4".equalsIgnoreCase(format) && imageFile != null && imageFile.exists()) {
-            output.setVideoCodec("libx264")
-                    .setAudioCodec("aac")
-                    .addExtraArgs(
-                            "-shortest",
-                            "-loop", "1",
-                            "-tune", "stillimage",
-                            "-pix_fmt", "yuv420p"
-                    );
-        } else {
-            output.setAudioCodec(switch (format.toLowerCase()) {
-                case "mp3" -> "libmp3lame";
-                case "m4a", "aac" -> "aac";
-                case "ogg" -> "libvorbis";
-                case "flac" -> "flac";
-                default -> "libmp3lame";
-            });
+        if ("mp4".equalsIgnoreCase(format) && mediaFile != null && mediaFile.exists()) {
 
-            builder.addExtraArgs("-vn");
-            if (!"flac".equalsIgnoreCase(format)) {
-                if ("mp3".equalsIgnoreCase(format) && isVBR) {
-                    output.addExtraArgs("-q:a", String.valueOf(bitrate));
-                } else {
-                    output.addExtraArgs("-b:a", bitrate + "k");
+            String command;
+            if (isVideo) {
+                command = String.format(
+                        "%s -y -i \"%s\" -i \"%s\" -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -shortest -b:a %dk \"%s\"",
+                        ffmpegPath,
+                        mediaFile.getAbsolutePath(),
+                        inputPath,
+                        bitrate,
+                        outputPath
+                );
+            } else {
+                command = String.format(
+                        "%s -y -loop 1 -i \"%s\" -i \"%s\" -c:v libx264 -c:a aac -shortest -tune stillimage -pix_fmt yuv420p -b:a %dk \"%s\"",
+                        ffmpegPath,
+                        mediaFile.getAbsolutePath(),
+                        inputPath,
+                        bitrate,
+                        outputPath
+                );
+            }
+
+            System.out.println("🎥 Executing command: " + command);
+
+            try {
+                ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("time=")) {
+                            String time = line.substring(line.indexOf("time=") + 5).split(" ")[0];
+                            double seconds = parseTimeToSeconds(time);
+                            if (totalDuration > 0 && progressCallback != null) {
+                                double percent = Math.min(seconds / totalDuration, 1.0);
+                                Platform.runLater(() -> progressCallback.accept(percent));
+                            }
+                        }
+                    }
                 }
+
+                int exitCode = process.waitFor();
+                if (exitCode != 0) throw new IOException("FFmpeg exited with code " + exitCode);
+
+                if (progressCallback != null)
+                    Platform.runLater(() -> progressCallback.accept(1.0));
+
+                return; // ✅ stop here
+            } catch (Exception e) {
+                System.err.println("⚠️ Manual ffmpeg merge failed: " + e.getMessage());
+                if (progressCallback != null)
+                    Platform.runLater(() -> progressCallback.accept(-1.0));
+                throw new IOException("MP4 merge failed", e);
             }
         }
 
-        System.out.println("🔍 Input path: " + inputPath);
-        System.out.println("🔍 Output path: " + outputPath);
-        System.out.println("🔍 Format: " + format);
-        if (imageFile != null) {
-            System.out.println("🖼️ Using image: " + imageFile.getAbsolutePath());
-        }
 
-        output.done();
+        // 🎧 CASE 2: Audio-only output
+        String codec = switch (format.toLowerCase()) {
+            case "mp3" -> "libmp3lame";
+            case "m4a", "aac" -> "aac";
+            case "ogg" -> "libvorbis";
+            case "flac" -> "flac";
+            default -> "libmp3lame";
+        };
 
+        String bitrateArg = isVBR
+                ? String.format("-q:a %d", Math.max(0, Math.min(9, bitrate / 32)))
+                : String.format("-b:a %dk", bitrate);
+
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(inputPath)
+                .overrideOutputFiles(true)
+                .addOutput(outputPath)
+                .setFormat(format)
+                .setAudioChannels(channels)
+                .setAudioSampleRate(sampleRate)
+                .addExtraArgs("-vn")
+                .addExtraArgs("-c:a", codec)
+                .addExtraArgs(bitrateArg.split(" ")[0], bitrateArg.split(" ")[1])
+                .done();
+
+        System.out.println("🎬 Starting conversion:");
+        System.out.println("   Input: " + inputPath);
+        System.out.println("   Format: " + format);
+        System.out.println("   Bitrate: " + bitrate + " kbps");
+        System.out.println("   VBR: " + isVBR);
+        System.out.println("   Output: " + outputPath);
+
+        // ==========================================================
+        // 🚀 Execute with progress tracking
+        // ==========================================================
         FFmpegExecutor executor = new FFmpegExecutor(ffmpeg, ffprobe);
         FFmpegJob job = executor.createJob(builder, progress -> {
             if (progress.out_time_ns <= 0 || Double.isNaN(progress.out_time_ns)) return;
+            if (totalDuration <= 1 || Double.isNaN(totalDuration)) return;
 
-            double currentSeconds = progress.out_time_ns / 1_000_000_000.0;
-            double percentage = currentSeconds / totalDurationSeconds;
+            double seconds = progress.out_time_ns / 1_000_000_000.0;
+            double percent = Math.min(seconds / totalDuration, 1.0);
 
-            if (percentage > 1.0) percentage = 1.0;
-            if (percentage < 0.0) percentage = 0.0;
-
-            if (progressCallback != null) {
-                final double finalPercentage = percentage; // ✅ Make it final
-                Platform.runLater(() -> progressCallback.accept(finalPercentage));
-            }
+            if (progressCallback != null)
+                Platform.runLater(() -> progressCallback.accept(percent));
         });
 
+        try {
+            job.run();
+            if (progressCallback != null)
+                Platform.runLater(() -> progressCallback.accept(1.0));
+        } catch (Exception e) {
+            System.err.println("FFmpeg failed: " + e.getMessage());
+            if (progressCallback != null)
+                Platform.runLater(() -> progressCallback.accept(-1.0));
+            throw e;
+        }
+    }
 
-        job.run();
+
+    private static double parseTimeToSeconds(String time) {
+        try {
+            String[] parts = time.split(":");
+            if (parts.length < 3) return 0;
+            double h = Double.parseDouble(parts[0]);
+            double m = Double.parseDouble(parts[1]);
+            double s = Double.parseDouble(parts[2]);
+            return h * 3600 + m * 60 + s;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+
+    public static ChangeFormatTask createDefault() throws IOException {
+        String os = System.getProperty("os.name").toLowerCase();
+        String ffmpegPath;
+        String ffprobePath;
+
+        if (os.contains("win")) {
+            ffmpegPath = "ffmpeg.exe";
+            ffprobePath = "ffprobe.exe";
+        } else if (new File("/opt/homebrew/bin/ffmpeg").exists()) {
+            ffmpegPath = "/opt/homebrew/bin/ffmpeg";
+            ffprobePath = "/opt/homebrew/bin/ffprobe";
+        } else {
+            ffmpegPath = "/usr/local/bin/ffmpeg";
+            ffprobePath = "/usr/local/bin/ffprobe";
+        }
+
+        return new ChangeFormatTask(ffmpegPath, ffprobePath);
     }
 }
