@@ -131,14 +131,16 @@ public class ChangeFormatTask {
                 ? String.format("-q:a %d", Math.max(0, Math.min(9, bitrate / 32)))
                 : String.format("-b:a %dk", bitrate);
 
+        String outputContainer = format.equalsIgnoreCase("m4a") ? "mp4" : format;
+
         FFmpegBuilder builder = new FFmpegBuilder()
                 .setInput(inputPath)
                 .overrideOutputFiles(true)
                 .addOutput(outputPath)
-                .setFormat(format)
+                .setFormat(outputContainer)
                 .setAudioChannels(channels)
                 .setAudioSampleRate(sampleRate)
-                .addExtraArgs("-vn")
+                .addExtraArgs("-vn")  // no video
                 .addExtraArgs("-c:a", codec)
                 .addExtraArgs(bitrateArg.split(" ")[0], bitrateArg.split(" ")[1])
                 .done();
