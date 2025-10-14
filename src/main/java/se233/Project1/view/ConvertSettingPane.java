@@ -15,7 +15,7 @@ import javafx.application.Platform;
 public class ConvertSettingPane {
 
     private final VBox fileSettingsContainer;
-    private final Map<String, ComboBox<String>> formatSelectors = new HashMap<>();
+    private final Map<String, ComboBox<String>> formatSelectors = new LinkedHashMap<>();
     private final Set<String> selectedFiles = new HashSet<>();
 
     private Consumer<String> onFileSelected;

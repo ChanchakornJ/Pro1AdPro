@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,27 +47,25 @@ public class LoadingPane {
         lbl.setMaxWidth(300);
         lbl.setTooltip(new javafx.scene.control.Tooltip(name));
 
-
         ProgressBar pb = new ProgressBar(0);
         pb.setPrefWidth(500);
         pb.setMaxWidth(Double.MAX_VALUE);
         pb.setVisible(true);
+
         labels.add(lbl);
         bars.add(pb);
         fileIndexMap.put(name, bars.size() - 1);
-
 
         HBox row = new HBox(10, lbl, pb);
         row.setStyle("-fx-padding: 8; -fx-alignment: center-left;");
         row.setFillHeight(true);
         VBox.setMargin(row, new Insets(8, 0, 8, 0));
-
-        HBox.setHgrow(pb, javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(pb, Priority.ALWAYS);
 
         container.getChildren().add(row);
-        labels.add(lbl);
-        bars.add(pb);
     }
+
+
 
 
 

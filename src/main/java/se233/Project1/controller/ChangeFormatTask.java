@@ -221,16 +221,18 @@ public class ChangeFormatTask {
                 Platform.runLater(() -> progressCallback.accept(percent));
         });
 
-        try {
-            job.run();
-            if (progressCallback != null)
-                Platform.runLater(() -> progressCallback.accept(1.0));
-        } catch (Exception e) {
-            System.err.println("FFmpeg failed: " + e.getMessage());
-            if (progressCallback != null)
-                Platform.runLater(() -> progressCallback.accept(-1.0));
-            throw e;
-        }
+        new Thread(() -> {
+            try {
+                job.run();
+                if (progressCallback != null)
+                    Platform.runLater(() -> progressCallback.accept(1.0));
+            } catch (Exception e) {
+                System.err.println("FFmpeg failed: " + e.getMessage());
+                if (progressCallback != null)
+                    Platform.runLater(() -> progressCallback.accept(-1.0));
+            }
+        }).start();
+
     }
 
 

@@ -24,10 +24,7 @@ import javafx.scene.layout.Region;
 
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,11 +45,6 @@ public class MainViewController {
     @FXML private VBox fileSettingsContainer;
     @FXML private Button convertButton;
     @FXML private Button advancedSettingButton;
-    @FXML private Label newFile1Name;
-    @FXML private Label newFile2Name;
-    @FXML private Label newFile3Name;
-    @FXML private Label newFile4Name;
-    @FXML private Label newFile5Name;
     @FXML private Button browseOutputButton;
     @FXML private ComboBox<String> globalFormatCombo;
     @FXML private VBox progressContainer;
@@ -67,19 +59,20 @@ public class MainViewController {
     private LoadingPane loadingPane;
 
     @FXML private ListView<String> inputListView;
-    private final Map<String, String> filePathMap = new HashMap<>();
     private double selectedAdvancedBitrate = 128.0;
     private double selectedSampleRate = 44100.0;
     private boolean stereoEnabled = true;
     private String selectedBitDepth = "24-bit";
     private String selectedQuality = "Medium";
     private int selectedChannels = 2;
-    private final ExecutorService executor = Executors.newFixedThreadPool(10);
-    private final Map<String, FileSettings> fileSettingsMap = new HashMap<>();
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
     private String currentFileName;
     private final Map<String, Node> settingsUIMap = new HashMap<>();
     private File selectedImageFile;
     private Popup advancedPopup;
+    private final Map<String, String> filePathMap = new LinkedHashMap<>();
+    private final Map<String, FileSettings> fileSettingsMap = new LinkedHashMap<>();
+
 
     @FXML
     public void initialize() {
@@ -93,12 +86,10 @@ public class MainViewController {
         ObservableList<String> formats = FXCollections.observableArrayList("mp3", "wav", "flac", "m4a", "ogg", "mp4");
         globalFormatCombo.setItems(formats);
         globalFormatCombo.setValue("mp3");
-        convertPane.setOnFileRemoved(fileName -> {
-            filePathMap.remove(fileName);
-            fileSettingsMap.remove(fileName);
-            Platform.runLater(() -> loadingPane.removeFileProgressByName(fileName));
+        convertPane.setOnFileSelected(fileName -> {
+            String format = convertPane.getFormatForFile(fileName);
+            showAdvancedSettingsFor(fileName, format);
         });
-
 
     }
 
@@ -155,12 +146,10 @@ public class MainViewController {
             return;
         }
         List<String> allFileNames = selectedFormats.keySet().stream()
-                .filter(name -> !name.equals("(No file yet)"))
+                .filter(name -> !name.equals("(No file yet)") && filePathMap.containsKey(name))
                 .toList();
 
-        Platform.runLater(() -> {
-            loadingPane.buildForFiles(allFileNames);
-        });
+// ✅ validate first — do NOT build progress rows yet
         List<String> validationErrors = validateBeforeConversion(selectedFormats);
         if (!validationErrors.isEmpty()) {
             StringBuilder msg = new StringBuilder("The following files cannot be converted:\n\n");
@@ -172,53 +161,44 @@ public class MainViewController {
             alert.setContentText(msg.toString());
             alert.showAndWait();
 
+            // Mark each invalid file as failed visually
             for (String err : validationErrors) {
                 String invalidFile = err.split("→")[0]
                         .replace("Invalid", "")
                         .replace("⚠️", "")
                         .trim();
-
-                Platform.runLater(() -> {
-                    loadingPane.removeFileProgressByName(invalidFile);
-                    loadingPane.removeFileProgressByName(invalidFile.toLowerCase());
-                    loadingPane.removeFileProgressByName(invalidFile.toUpperCase());
-                });
+                Platform.runLater(() -> loadingPane.markFailed(allFileNames.indexOf(invalidFile), invalidFile));
             }
-
-
-
-
-
-            loadingPane.buildForFiles(
-                    selectedFormats.keySet().stream()
-                            .filter(name -> !name.equals("(No file yet)") && filePathMap.containsKey(name))
-                            .toList()
-            );
             return;
-
         }
 
+// ✅ Build progress bars *after* validation passes
+        Platform.runLater(() -> loadingPane.buildForFiles(allFileNames));
 
-        int index = 0;
+
+
+
         for (Map.Entry<String, String> entry : selectedFormats.entrySet()) {
-            final int progressIndex = index;
-            index++;
-
             String fileName = entry.getKey();
+            final int progressIndex = allFileNames.indexOf(fileName);
             String selectedFormat = entry.getValue();
             String inputPath = filePathMap.get(fileName);
             if (inputPath == null) continue;
 
 
             String outputPath;
-            String outputFileName;
+            String baseName = fileName;
+            int dotIndex = baseName.lastIndexOf('.');
+            if (dotIndex > 0) baseName = baseName.substring(0, dotIndex);
+
+            String outputFileName = baseName  + "." + selectedFormat;
+
             if (outputDirectory != null) {
-                outputFileName = fileName.substring(0, fileName.lastIndexOf('.')) + "." + selectedFormat;
                 outputPath = new File(outputDirectory, outputFileName).getAbsolutePath();
             } else {
-                outputPath = inputPath.substring(0, inputPath.lastIndexOf('.')) + "." + selectedFormat;
-                outputFileName = new File(outputPath).getName();
+                outputPath = new File(new File(inputPath).getParent(), outputFileName).getAbsolutePath();
             }
+
 
             javafx.application.Platform.runLater(() -> loadingPane.showProgress(progressIndex, outputFileName));
 
