@@ -2,6 +2,7 @@ package se233.Project1.view;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class LoadingPane {
         pb.setPrefWidth(350);
         pb.setVisible(true);
 
-        VBox row = new VBox(3, lbl, pb);
+        HBox row = new HBox(3, lbl, pb);
         row.setStyle("-fx-padding: 5;");
 
         container.getChildren().add(row);

@@ -135,16 +135,18 @@ public class MainViewController {
             String inputPath = filePathMap.get(fileName);
             if (inputPath == null) continue;
 
+
             String outputPath;
+            String outputFileName;
             if (outputDirectory != null) {
-                outputPath = new File(outputDirectory,
-                        fileName.substring(0, fileName.lastIndexOf('.')) + "." + selectedFormat
-                ).getAbsolutePath();
+                outputFileName = fileName.substring(0, fileName.lastIndexOf('.')) + "." + selectedFormat;
+                outputPath = new File(outputDirectory, outputFileName).getAbsolutePath();
             } else {
                 outputPath = inputPath.substring(0, inputPath.lastIndexOf('.')) + "." + selectedFormat;
+                outputFileName = new File(outputPath).getName();
             }
 
-            javafx.application.Platform.runLater(() -> loadingPane.showProgress(progressIndex, fileName));
+            javafx.application.Platform.runLater(() -> loadingPane.showProgress(progressIndex, outputFileName));
 
             executor.submit(() -> {
                 try {
@@ -826,13 +828,6 @@ public class MainViewController {
         String format = globalFormatCombo.getValue();
         convertPane.applyFormatToAll(format);
     }
-
-
-
-
-
-
-
     @FXML
     public void onExit() {
         executor.shutdown();
