@@ -15,6 +15,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
+import se233.Project1.model.ConversionException;
 import se233.Project1.model.FileSettings;
 import se233.Project1.view.ConvertSettingPane;
 import se233.Project1.view.DropPane;
@@ -240,21 +241,20 @@ public class MainViewController {
 
 
                     System.out.println("Converted: " + fileName + " → " + outputPath);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    System.out.println("Conversion failed for: " + fileName);
-
+                } catch (ConversionException ce) {
                     int finalIndex = progressIndex;
                     Platform.runLater(() -> {
                         loadingPane.markFailed(finalIndex, fileName);
                         loadingPane.removeFileProgressWithDelay(finalIndex);
 
                         Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Conversion Failed");
+                        alert.setTitle("Conversion Error");
                         alert.setHeaderText("Failed to convert: " + fileName);
-                        alert.setContentText("An error occurred during conversion.\n\n" +
-                                "File path:\n" + inputPath + "\n\n" +
-                                "Would you like to remove this file from the list?");
+                        alert.setContentText(
+                                "⚠️ Conversion failed due to: " + ce.getMessage() + "\n\n" +
+                                        "Would you like to remove this file from the list?"
+                        );
+
                         ButtonType removeBtn = new ButtonType("Remove File");
                         ButtonType ignoreBtn = new ButtonType("Ignore");
                         alert.getButtonTypes().setAll(removeBtn, ignoreBtn);
@@ -263,14 +263,28 @@ public class MainViewController {
                             if (response == removeBtn) {
                                 filePathMap.remove(fileName);
                                 fileSettingsMap.remove(fileName);
-                                convertPane.removeFile(fileName); // remove from convert list
+                                convertPane.removeFile(fileName);
                                 Platform.runLater(() -> loadingPane.removeFileProgressByName(fileName));
                             }
                         });
-
                     });
 
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    int finalIndex = progressIndex;
+                    Platform.runLater(() -> {
+                        loadingPane.markFailed(finalIndex, fileName);
+                        loadingPane.removeFileProgressWithDelay(finalIndex);
+
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Unexpected Error");
+                        alert.setHeaderText("Unexpected failure during conversion");
+                        alert.setContentText("File: " + fileName + "\n\n" +
+                                "Reason: " + e.getMessage());
+                        alert.showAndWait();
+                    });
                 }
+
 
             });
         }
@@ -588,7 +602,7 @@ public class MainViewController {
         container.getChildren().addAll(bitrateLabel, bitrateSlider, bitrateCurrentLabel,srLabel, sampleRateBox, channelsLabel, channelsBox);
     }
     private void buildM4aSettings(VBox container){
-        Label bitrateLabel = new Label("m4a Quality");
+        Label bitrateLabel = new Label("M4A Quality");
         Slider bitrateSlider = new Slider();
         Label bitrateCurrentLabel = new Label();
 
@@ -725,6 +739,7 @@ public class MainViewController {
     }
 
     public void buildFlacSettings(VBox container){
+        Label Labels = new Label("Flac Quality");
         Label bitrateLabel = new Label("Bitrate: 128 kbps");
         selectedAdvancedBitrate = 32;
         Label sampleRateLabel = new Label("Sample Rate");
@@ -745,7 +760,7 @@ public class MainViewController {
             System.out.println("Channels: " + selectedChannels);
         });
 
-                container.getChildren().addAll(
+                container.getChildren().addAll(Labels,
                 bitrateLabel,
                 sampleRateLabel, sampleRateBox,
                 channelsLabel, channelsBox

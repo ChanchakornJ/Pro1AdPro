@@ -8,6 +8,7 @@ import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.job.FFmpegJob;
 import net.bramp.ffmpeg.probe.FFmpegFormat;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
+import se233.Project1.model.ConversionException;
 
 import java.io.*;
 import java.util.function.Consumer;
@@ -36,11 +37,11 @@ public class ChangeFormatTask {
             boolean isVBR,
             File mediaFile,
             Consumer<Double> progressCallback
-    ) throws IOException {
+    ) throws IOException, ConversionException {
 
         File inputFile = new File(inputPath);
         if (!inputFile.exists()) {
-            throw new IOException("Input file does not exist: " + inputPath);
+            throw new ConversionException("Input file does not exist: " + inputPath);
         }
 
         FFmpegProbeResult probe = ffprobe.probe(inputPath);
@@ -113,7 +114,7 @@ public class ChangeFormatTask {
                 System.err.println("⚠️ Manual ffmpeg merge failed: " + e.getMessage());
                 if (progressCallback != null)
                     Platform.runLater(() -> progressCallback.accept(-1.0));
-                throw new IOException("MP4 merge failed", e);
+                throw new ConversionException("MP4 merge failed", e);
             }
         }
         // CASE 1.5: Audio-only MP4 (no thumbnail/video)
@@ -126,7 +127,7 @@ public class ChangeFormatTask {
                     outputPath
             );
 
-            System.out.println("🎧 Executing audio-only MP4 command: " + command);
+            System.out.println("Executing audio-only MP4 command: " + command);
 
             try {
                 ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
@@ -165,7 +166,7 @@ public class ChangeFormatTask {
                 System.err.println("⚠️ MP4 (audio-only) conversion failed: " + e.getMessage());
                 if (progressCallback != null)
                     Platform.runLater(() -> progressCallback.accept(-1.0));
-                throw new IOException("MP4 (audio-only) conversion failed", e);
+                throw new ConversionException("MP4 (audio-only) conversion failed", e);
             }
         }
 
