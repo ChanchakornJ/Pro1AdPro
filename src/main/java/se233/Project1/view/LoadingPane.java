@@ -1,24 +1,30 @@
 package se233.Project1.view;
 
+import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LoadingPane {
     private final VBox container;
     private final List<ProgressBar> bars = new ArrayList<>();
     private final List<Label> labels = new ArrayList<>();
+    private final Map<String, Integer> fileIndexMap = new HashMap<>();
+
 
     public LoadingPane(VBox container) {
         this.container = container;
-        showPlaceholder(); // ✅ show "(No file yet)" on startup
+
     }
 
     public void buildForFiles(List<String> fileNames) {
-        container.getChildren().clear();  // ✅ Always clear everything first
+        container.getChildren().clear();
         bars.clear();
         labels.clear();
 
@@ -33,37 +39,43 @@ public class LoadingPane {
     }
 
 
-    /** Adds a single progress row */
     private void addProgressRow(String name) {
         Label lbl = new Label(name);
         lbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #333;");
+        lbl.setMinWidth(150);
+        lbl.setMaxWidth(300);
+        lbl.setTooltip(new javafx.scene.control.Tooltip(name));
+
 
         ProgressBar pb = new ProgressBar(0);
-        pb.setPrefWidth(350);
+        pb.setPrefWidth(500);
+        pb.setMaxWidth(Double.MAX_VALUE);
         pb.setVisible(true);
+        labels.add(lbl);
+        bars.add(pb);
+        fileIndexMap.put(name, bars.size() - 1);
 
-        HBox row = new HBox(3, lbl, pb);
-        row.setStyle("-fx-padding: 5;");
+
+        HBox row = new HBox(10, lbl, pb);
+        row.setStyle("-fx-padding: 8; -fx-alignment: center-left;");
+        row.setFillHeight(true);
+        VBox.setMargin(row, new Insets(8, 0, 8, 0));
+
+        HBox.setHgrow(pb, javafx.scene.layout.Priority.ALWAYS);
 
         container.getChildren().add(row);
         labels.add(lbl);
         bars.add(pb);
     }
 
-    /** Show "(No file yet)" placeholder */
+
+
     public void showPlaceholder() {
         container.getChildren().clear();
-        Label placeholder = new Label("(No file yet)");
-        placeholder.setStyle("-fx-text-fill: gray; -fx-font-style: italic; -fx-padding: 5;");
-        container.getChildren().add(placeholder);
+
     }
 
-    /** Remove placeholder manually if needed */
-    public void hidePlaceholder() {
-        container.getChildren().removeIf(node ->
-                node instanceof Label && ((Label) node).getText().equals("(No file yet)")
-        );
-    }
+
 
     public void hideAll() {
         for (int i = 0; i < bars.size(); i++) {
@@ -97,5 +109,62 @@ public class LoadingPane {
             bars.get(index).setStyle("-fx-accent: " + color + ";");
         }
     }
+    public void removeFileProgress(int index) {
+        if (index < 0 || index >= container.getChildren().size()) return;
+
+        String fileName = labels.get(index).getText();
+
+        container.getChildren().remove(index);
+        bars.remove(index);
+        labels.remove(index);
+        fileIndexMap.remove(fileName);
+
+        // Rebuild the index map so all indexes are accurate
+        for (int i = 0; i < labels.size(); i++) {
+            fileIndexMap.put(labels.get(i).getText(), i);
+        }
+    }
+
+
+    public void removeFileProgressWithDelay(int index) {
+        if (index < 0 || index >= bars.size()) return;
+
+        ProgressBar pb = bars.get(index);
+        Label lbl = labels.get(index);
+
+        pb.setStyle("-fx-accent: #cc0000;");
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(1500); // wait 1.5s before removal
+            } catch (InterruptedException ignored) {}
+
+            Platform.runLater(() -> removeFileProgress(index));
+        }).start();
+    }
+    public void markFailed(int index, String message) {
+        if (index < labels.size()) {
+            Label lbl = labels.get(index);
+            lbl.setText("Invalid, " + message);
+            lbl.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        }
+
+    }
+    // Instantly remove a progress bar by file name
+    public void removeFileProgressByName(String fileName) {
+        for (int i = 0; i < labels.size(); i++) {
+            if (labels.get(i).getText().equals(fileName)) {
+                removeFileProgress(i);
+                break;
+            }
+        }
+    }
+
+
+
+
+
+
+
 
 }

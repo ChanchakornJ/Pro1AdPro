@@ -157,7 +157,7 @@ public class ConvertSettingPane {
         // This forces the VBox to re-layout and show changes
         fileSettingsContainer.requestLayout();
     }
-    private void removeFile(String fileName) {
+    public void removeFile(String fileName) {
         // 1. Remove from tracking maps
         formatSelectors.remove(fileName);
         selectedFiles.remove(fileName);

@@ -73,7 +73,7 @@ public class MainViewController {
     private String selectedBitDepth = "24-bit";
     private String selectedQuality = "Medium";
     private int selectedChannels = 2;
-    private final ExecutorService executor = Executors.newFixedThreadPool(4);
+    private final ExecutorService executor = Executors.newFixedThreadPool(10);
     private final Map<String, FileSettings> fileSettingsMap = new HashMap<>();
     private String currentFileName;
     private final Map<String, Node> settingsUIMap = new HashMap<>();
@@ -99,11 +99,49 @@ public class MainViewController {
 
     }
 
+    private List<String> validateBeforeConversion(Map<String, String> selectedFormats) {
+        List<String> errors = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : selectedFormats.entrySet()) {
+            String fileName = entry.getKey();
+            String targetFormat = entry.getValue();
+
+            if (fileName == null || fileName.trim().isEmpty() || fileName.equals("(No file yet)")) {
+                continue;
+            }
+
+            String inputPath = filePathMap.get(fileName);
+            if (inputPath == null || !(new File(inputPath).exists())) {
+                errors.add(fileName + " → input file missing or unreadable.");
+                continue;
+            }
+
+            // Extract input format
+            String inputExt = "";
+            int dot = fileName.lastIndexOf('.');
+            if (dot >= 0) inputExt = fileName.substring(dot + 1).toLowerCase();
+
+            // Same format
+            if (inputExt.equalsIgnoreCase(targetFormat)) {
+                errors.add("⚠️ " + fileName + " → already in ." + targetFormat + " format.");
+            }
+
+            // Unsupported output format
+            List<String> supported = List.of("mp3", "wav", "flac", "m4a", "ogg", "mp4");
+            if (!supported.contains(targetFormat.toLowerCase())) {
+                errors.add(fileName + " → unsupported output format: " + targetFormat);
+            }
+        }
+
+        return errors;
+    }
+
 
 
     @FXML
     public void changeFormat() {
         System.out.println("changeFormat called");
+
         Map<String, String> selectedFormats = convertPane.getSelectedFormats();
         if (selectedFormats.isEmpty() || filePathMap.isEmpty()) {
             Alert noFileAlert = new Alert(Alert.AlertType.WARNING);
@@ -120,9 +158,42 @@ public class MainViewController {
         Platform.runLater(() -> {
             loadingPane.buildForFiles(allFileNames);
         });
+        List<String> validationErrors = validateBeforeConversion(selectedFormats);
+        if (!validationErrors.isEmpty()) {
+            StringBuilder msg = new StringBuilder("The following files cannot be converted:\n\n");
+            for (String err : validationErrors) msg.append(err).append("\n");
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Conversion Error");
+            alert.setHeaderText("Some files have issues");
+            alert.setContentText(msg.toString());
+            alert.showAndWait();
+
+            for (String err : validationErrors) {
+                String invalidFile = err.split("→")[0]
+                        .replace("Invalid", "")
+                        .replace("⚠️", "")
+                        .trim();
+
+                Platform.runLater(() -> {
+                    loadingPane.removeFileProgressByName(invalidFile);
+                    loadingPane.removeFileProgressByName(invalidFile.toLowerCase());
+                    loadingPane.removeFileProgressByName(invalidFile.toUpperCase());
+                });
+            }
 
 
 
+
+
+            loadingPane.buildForFiles(
+                    selectedFormats.keySet().stream()
+                            .filter(name -> !name.equals("(No file yet)") && filePathMap.containsKey(name))
+                            .toList()
+            );
+            return;
+
+        }
 
 
         int index = 0;
@@ -153,6 +224,7 @@ public class MainViewController {
                     ChangeFormatTask task = new ChangeFormatTask("/opt/homebrew/bin/ffmpeg", "/opt/homebrew/bin/ffprobe");
 
                     FileSettings settings = fileSettingsMap.getOrDefault(fileName, new FileSettings(128, 44100, 2));
+                    String outputFileNameFinal = outputFileName; // capture for lambda
                     task.convertToFormatWithProgress(
                             inputPath,
                             outputPath,
@@ -162,18 +234,44 @@ public class MainViewController {
                             (int) settings.sampleRate,
                             settings.isVBR,
                             selectedImageFile,
-                            progress -> updateProgressUI(progressIndex, fileName, progress)
+                            progress -> updateProgressUI(progressIndex, outputFileNameFinal, progress)
                     );
+
 
 
                     System.out.println("Converted: " + fileName + " → " + outputPath);
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("Conversion failed for: " + fileName);
+
                     int finalIndex = progressIndex;
-                    Platform.runLater(() -> loadingPane.setProgress(finalIndex, 1.0));
+                    Platform.runLater(() -> {
+                        loadingPane.markFailed(finalIndex, fileName);
+                        loadingPane.removeFileProgressWithDelay(finalIndex);
+
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Conversion Failed");
+                        alert.setHeaderText("Failed to convert: " + fileName);
+                        alert.setContentText("An error occurred during conversion.\n\n" +
+                                "File path:\n" + inputPath + "\n\n" +
+                                "Would you like to remove this file from the list?");
+                        ButtonType removeBtn = new ButtonType("Remove File");
+                        ButtonType ignoreBtn = new ButtonType("Ignore");
+                        alert.getButtonTypes().setAll(removeBtn, ignoreBtn);
+
+                        alert.showAndWait().ifPresent(response -> {
+                            if (response == removeBtn) {
+                                filePathMap.remove(fileName);
+                                fileSettingsMap.remove(fileName);
+                                convertPane.removeFile(fileName); // remove from convert list
+                                Platform.runLater(() -> loadingPane.removeFileProgressByName(fileName));
+                            }
+                        });
+
+                    });
 
                 }
+
             });
         }
     }
@@ -184,10 +282,7 @@ public class MainViewController {
     @FXML
     private void handleAdvancedSetting(ActionEvent event) {
         if (advancedPopup == null) {
-            // popup สร้างครั้งเดียว
             advancedPopup = new Popup();
-
-            // ตัวอย่าง: สมมติไฟล์เป็น mp3
             Node settingsUI = createSetting("mp3");
 
             VBox popupContent = new VBox(10, settingsUI);
@@ -228,18 +323,14 @@ public class MainViewController {
     private void showAdvancedSettingsFor(String fileName, String format) {
         this.currentFileName = fileName;
 
-        // Create or retrieve the settings object for this file
+
         FileSettings fs = fileSettingsMap.computeIfAbsent(fileName, f -> new FileSettings(128, 44100, 2));
 
-        // If the format changed, clear the old UI so a new one is built
         if (fs.format != null && !fs.format.equalsIgnoreCase(format)) {
             settingsUIMap.remove(fileName);
         }
-
-        // Always store the current format for reference
         fs.format = format;
 
-        // 🔁 Now continue with the UI logic
         if (advancedPopup != null && advancedPopup.isShowing()) {
             advancedPopup.hide();
         }
@@ -262,7 +353,7 @@ public class MainViewController {
 
 
     private void buildMp3Settings(VBox container) {
-        // --- 🔊 Always-visible Quality Slider ---
+        // Always-visible Quality Slider
         Label bitrateLabel = new Label("MP3 Quality");
         Slider bitrateSlider = new Slider();
         Label bitrateCurrentLabel = new Label();
@@ -305,7 +396,7 @@ public class MainViewController {
         bitrateSlider.setValue(1);
         bitrateCurrentLabel.setText("Quality: " + bitrateValues[1] + " kbps (" + bitrateLabels[1] + ")");
 
-        // --- ⚙️ Bitrate Mode Section (NEW) ---
+        // Bitrate Mode Section
         Label modeLabel = new Label("Bitrate Mode");
         RadioButton constantRadio = new RadioButton("Constant");
         RadioButton variableRadio = new RadioButton("Variable");
@@ -316,7 +407,7 @@ public class MainViewController {
 
         HBox modeRow = new HBox(10, modeLabel, constantRadio, variableRadio);
 
-// --- Bitrate selection row (SAME LINE) ---
+        //Bitrate selection row
         Label bitrateChoiceLabel = new Label("Bitrate:");
         ComboBox<String> constantBox = new ComboBox<>();
         constantBox.getItems().addAll("32 kbps", "40 kbps", "48 kbps", "56 kbps", "64 kbps", "80 kbps", "96 kbps", "112 kbps", "128 kbps" , "160 kbps",  "192 kbps", "224 kbps", "256 kbps", "320 kbps");
@@ -709,9 +800,9 @@ public class MainViewController {
             selectedAdvancedBitrate = bitrateValues[i];
         });
 
-        // -----------------------------------------------------
-        // 🎵 SAMPLE RATE
-        // -----------------------------------------------------
+
+        //  SAMPLE RATE
+
         Label sampleRateLabel = new Label("Sample Rate");
         ComboBox<String> sampleRateBox = new ComboBox<>();
         sampleRateBox.getItems().addAll(
@@ -725,9 +816,7 @@ public class MainViewController {
                 )
         );
 
-        // -----------------------------------------------------
         // 🔊 CHANNELS
-        // -----------------------------------------------------
         Label channelsLabel = new Label("Channels");
         ComboBox<String> channelsBox = new ComboBox<>();
         channelsBox.getItems().addAll("1 (Mono)", "2 (Stereo)");
@@ -736,9 +825,7 @@ public class MainViewController {
                 selectedChannels = channelsBox.getValue().startsWith("1") ? 1 : 2
         );
 
-        // -----------------------------------------------------
-        // 🖼️ MEDIA SELECTION (Image / Video)
-        // -----------------------------------------------------
+        // MEDIA SELECTION (Image / Video)
         Label mediaLabel = new Label("Thumbnail / Video");
         Label selectedMediaLabel = new Label("No media selected");
         selectedMediaLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 11px;");
@@ -768,9 +855,8 @@ public class MainViewController {
         HBox mediaRow = new HBox(10, mediaLabel, chooseMediaButton);
         VBox mediaContainer = new VBox(5, mediaRow, selectedMediaLabel);
 
-        // -----------------------------------------------------
-        // 🧩 ADD COMPONENTS TO CONTAINER
-        // -----------------------------------------------------
+        // ADD COMPONENTS TO CONTAINER
+
         container.getChildren().addAll(
                 bitrateLabel,
                 bitrateSlider,
@@ -785,10 +871,10 @@ public class MainViewController {
 
     private void updateProgressUI(int index, String fileName, double progress) {
         Platform.runLater(() -> {
-            loadingPane.setFileName(index, fileName);
-
+            if (progress == 0) {
+                loadingPane.setFileName(index, fileName); // only set name at start
+            }
             if (progress < 0) {
-                // 🔴 failed
                 loadingPane.setProgress(index, 1.0);
                 loadingPane.setBarColor(index, "#cc0000");
             } else {
@@ -796,6 +882,7 @@ public class MainViewController {
             }
         });
     }
+
 
     @FXML
     private void handleBrowseOutput(ActionEvent event) {
