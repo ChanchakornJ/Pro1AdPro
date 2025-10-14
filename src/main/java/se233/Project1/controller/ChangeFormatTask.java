@@ -140,12 +140,12 @@ public class ChangeFormatTask extends Task<Void> {
                 int exitCode = process.waitFor();
                 if (exitCode != 0) throw new IOException("FFmpeg exited with code " + exitCode);
                 if (progressCallback != null)
-                    progressCallback.accept(-1.0);
+                    progressCallback.accept(1.0);
                 return;
             } catch (Exception e) {
                 System.err.println("⚠️ Manual ffmpeg merge failed: " + e.getMessage());
                 if (progressCallback != null)
-                    progressCallback.accept(-1.0);
+                    progressCallback.accept(1.0);
                 throw new ConversionException("MP4 merge failed", e);
             }
         }
@@ -196,7 +196,7 @@ public class ChangeFormatTask extends Task<Void> {
             } catch (Exception e) {
                 System.err.println("⚠️ MP4 (audio-only) conversion failed: " + e.getMessage());
                 if (progressCallback != null)
-                    progressCallback.accept(-1.0);
+                    progressCallback.accept(1.0);
                 throw new ConversionException("MP4 (audio-only) conversion failed", e);
             }
         }
