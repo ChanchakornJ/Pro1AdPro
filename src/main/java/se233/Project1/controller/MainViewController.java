@@ -179,7 +179,7 @@ public class MainViewController {
             return;
         }
 
-// ✅ Build progress bars *after* validation passes
+// Build progress bars *after* validation passes
         Platform.runLater(() -> loadingPane.buildForFiles(allFileNames));
 
 
@@ -209,29 +209,40 @@ public class MainViewController {
 
             javafx.application.Platform.runLater(() -> loadingPane.showProgress(progressIndex, outputFileName));
 
-            executor.submit(() -> {
-                try {
-                    ChangeFormatTask task = new ChangeFormatTask("/opt/homebrew/bin/ffmpeg", "/opt/homebrew/bin/ffprobe");
+            try {
+                // retrieve per-file settings (bitrate, sample rate, etc.)
+                FileSettings settings = fileSettingsMap.getOrDefault(fileName, new FileSettings(128, 44100, 2));
 
-                    FileSettings settings = fileSettingsMap.getOrDefault(fileName, new FileSettings(128, 44100, 2));
-                    String outputFileNameFinal = outputFileName; // capture for lambda
-                    task.convertToFormatWithProgress(
-                            inputPath,
-                            outputPath,
-                            selectedFormat,
-                            (int) settings.bitrate,
-                            settings.channels,
-                            (int) settings.sampleRate,
-                            settings.isVBR,
-                            selectedImageFile,
-                            progress -> updateProgressUI(progressIndex, outputFileNameFinal, progress)
-                    );
+                // create the JavaFX Task for this file
+                ChangeFormatTask task = new ChangeFormatTask(
+                        "/opt/homebrew/bin/ffmpeg",
+                        "/opt/homebrew/bin/ffprobe",
+                        inputPath,
+                        outputPath,
+                        selectedFormat,
+                        (int) settings.bitrate,
+                        settings.channels,
+                        (int) settings.sampleRate,
+                        settings.isVBR,
+                        selectedImageFile
+                );
 
+                // 🔄 progress updates (realtime UI feedback)
+                task.progressProperty().addListener((obs, oldVal, newVal) -> {
+                    double progress = newVal == null ? 0 : newVal.doubleValue();
+                    Platform.runLater(() -> updateProgressUI(progressIndex, outputFileName, progress));
+                });
 
-
+                // success callback
+                task.setOnSucceeded(e -> {
+                    Platform.runLater(() -> updateProgressUI(progressIndex, outputFileName, 1.0));
                     System.out.println("Converted: " + fileName + " → " + outputPath);
-                } catch (ConversionException ce) {
+                });
+
+                task.setOnFailed(e -> {
+                    Throwable ex = task.getException();
                     int finalIndex = progressIndex;
+
                     Platform.runLater(() -> {
                         loadingPane.markFailed(finalIndex, fileName);
                         loadingPane.removeFileProgressWithDelay(finalIndex);
@@ -240,7 +251,8 @@ public class MainViewController {
                         alert.setTitle("Conversion Error");
                         alert.setHeaderText("Failed to convert: " + fileName);
                         alert.setContentText(
-                                "⚠️ Conversion failed due to: " + ce.getMessage() + "\n\n" +
+                                "⚠️ Conversion failed due to: " +
+                                        (ex != null ? ex.getMessage() : "Unknown error") + "\n\n" +
                                         "Would you like to remove this file from the list?"
                         );
 
@@ -257,25 +269,26 @@ public class MainViewController {
                             }
                         });
                     });
+                });
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    int finalIndex = progressIndex;
-                    Platform.runLater(() -> {
-                        loadingPane.markFailed(finalIndex, fileName);
-                        loadingPane.removeFileProgressWithDelay(finalIndex);
+                //run concurrently (up to 4 threads, based on your ExecutorService)
+                executor.submit(task);
 
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Unexpected Error");
-                        alert.setHeaderText("Unexpected failure during conversion");
-                        alert.setContentText("File: " + fileName + "\n\n" +
-                                "Reason: " + e.getMessage());
-                        alert.showAndWait();
-                    });
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                int finalIndex = progressIndex;
+                Platform.runLater(() -> {
+                    loadingPane.markFailed(finalIndex, fileName);
+                    loadingPane.removeFileProgressWithDelay(finalIndex);
 
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Unexpected Error");
+                    alert.setHeaderText("Unexpected failure during conversion");
+                    alert.setContentText("File: " + fileName + "\n\n" + "Reason: " + e.getMessage());
+                    alert.showAndWait();
+                });
+            }
 
-            });
         }
     }
 
@@ -895,7 +908,7 @@ public class MainViewController {
 
         File selectedDir = directoryChooser.showDialog(browseOutputButton.getScene().getWindow());
         if (selectedDir != null) {
-            outputDirectory = selectedDir; // ✅ store as File
+            outputDirectory = selectedDir;
 
             // Change button text to show the folder name
             String folderName = selectedDir.getName();
