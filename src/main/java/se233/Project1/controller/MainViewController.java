@@ -93,10 +93,12 @@ public class MainViewController {
         ObservableList<String> formats = FXCollections.observableArrayList("mp3", "wav", "flac", "m4a", "ogg", "mp4");
         globalFormatCombo.setItems(formats);
         globalFormatCombo.setValue("mp3");
-        convertPane.setOnFileSelected(fileName -> {
-            String format = convertPane.getFormatForFile(fileName);
-            showAdvancedSettingsFor(fileName, format);
+        convertPane.setOnFileRemoved(fileName -> {
+            filePathMap.remove(fileName);
+            fileSettingsMap.remove(fileName);
+            Platform.runLater(() -> loadingPane.removeFileProgressByName(fileName));
         });
+
 
     }
 

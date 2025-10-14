@@ -152,13 +152,17 @@ public class LoadingPane {
     }
     // Instantly remove a progress bar by file name
     public void removeFileProgressByName(String fileName) {
-        for (int i = 0; i < labels.size(); i++) {
-            if (labels.get(i).getText().equals(fileName)) {
-                removeFileProgress(i);
-                break;
+        Platform.runLater(() -> {
+            for (int i = 0; i < labels.size(); i++) {
+                String lblText = labels.get(i).getText();
+                if (lblText != null && lblText.toLowerCase().contains(fileName.toLowerCase())) {
+                    removeFileProgress(i);
+                    break;
+                }
             }
-        }
+        });
     }
+
 
 
 

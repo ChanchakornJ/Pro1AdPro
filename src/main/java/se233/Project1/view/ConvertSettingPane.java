@@ -68,7 +68,13 @@ public class ConvertSettingPane {
 
             Button deleteButton = new Button("✖");
             deleteButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #cc0000; -fx-font-size: 14px; -fx-cursor: hand;");
-            deleteButton.setOnAction(e -> removeFile(fileName));
+            deleteButton.setOnAction(e -> {
+                removeFile(fileName);
+                if (onFileRemoved != null) {
+                    onFileRemoved.accept(fileName);
+                }
+            });
+
 
             selectBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal) selectedFiles.add(fileName);
@@ -101,9 +107,7 @@ public class ConvertSettingPane {
         return result;
     }
 
-    // --------------------------
-    // 🎯 Get or set single file format
-    // --------------------------
+    // Get or set single file format
     public String getFormatForFile(String fileName) {
         ComboBox<String> comboBox = formatSelectors.get(fileName);
         return comboBox != null ? comboBox.getValue() : "mp3";
@@ -114,16 +118,14 @@ public class ConvertSettingPane {
         if (comboBox != null) comboBox.setValue(format);
     }
 
-    // --------------------------
-    // 🧠 Selected files tracking
-    // --------------------------
+    // Selected files tracking
+
     public Set<String> getSelectedFiles() {
         return Collections.unmodifiableSet(selectedFiles);
     }
 
-    // --------------------------
-    // ⚙️ Apply to all files
-    // --------------------------
+    // ⚙Apply to all files
+
     public void applyFormatToAll(String format) {
         Platform.runLater(() -> {
             for (Map.Entry<String, ComboBox<String>> entry : formatSelectors.entrySet()) {
@@ -179,5 +181,11 @@ public class ConvertSettingPane {
             createDefaultRow();
         }
     }
+    private Consumer<String> onFileRemoved;
+
+    public void setOnFileRemoved(Consumer<String> listener) {
+        this.onFileRemoved = listener;
+    }
+
 
 }
