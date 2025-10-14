@@ -137,7 +137,13 @@ public class MainViewController {
         System.out.println("changeFormat called");
 
         Map<String, String> selectedFormats = convertPane.getSelectedFormats();
-        if (selectedFormats.isEmpty() || filePathMap.isEmpty()) {
+
+        selectedFormats.entrySet().removeIf(entry -> entry.getKey().equals("(No file yet)"));
+
+        boolean hasValidFiles = selectedFormats.keySet().stream()
+                .anyMatch(filePathMap::containsKey);
+
+        if (selectedFormats.isEmpty() || !hasValidFiles) {
             Alert noFileAlert = new Alert(Alert.AlertType.WARNING);
             noFileAlert.setTitle("No Files Selected");
             noFileAlert.setHeaderText("Nothing to convert");
@@ -145,6 +151,7 @@ public class MainViewController {
             noFileAlert.showAndWait();
             return;
         }
+
         List<String> allFileNames = selectedFormats.keySet().stream()
                 .filter(name -> !name.equals("(No file yet)") && filePathMap.containsKey(name))
                 .toList();
