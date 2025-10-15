@@ -38,12 +38,11 @@ public class DropPane {
 
             if (db.hasFiles()) {
                 success = true;
-                filePathMap.clear();
                 for (File file : db.getFiles()) {
                     filePathMap.put(file.getName(), file.getAbsolutePath());
                 }
                 onFilesDropped.accept(db.getFiles());
-                dropFileLabel.setText(db.getFiles().size() + " files loaded");
+                dropFileLabel.setText(filePathMap.size() + " files loaded");
             }
 
             event.setDropCompleted(success);
